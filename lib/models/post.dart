@@ -10,6 +10,8 @@ class Post {
   final String? imageAlt;
   final String? authorName;
   final List<String>? categories; // Noms des catégories
+  final String? videoUrl; // URL vidéo (YouTube, Vimeo, etc.)
+  final String? videoType; // 'mp4', 'youtube', 'vimeo', 'embed', etc.
 
   Post({
     required this.id,
@@ -22,6 +24,8 @@ class Post {
     this.imageAlt,
     this.authorName,
     this.categories,
+    this.videoUrl,
+    this.videoType,
   });
 
   factory Post.fromJson(Map<String, dynamic> json) {
@@ -39,6 +43,78 @@ class Post {
       return null;
     }
 
+    // Extract video URL from content or custom fields
+    String? extractVideoUrl(String? content, Map<String, dynamic>? acf) {
+      String? videoUrl;
+
+      // Try to extract from ACF fields first (many WP setups use ACF)
+      if (acf != null) {
+        videoUrl =
+            acf['video_url']?.toString() ??
+            acf['video']?.toString() ??
+            acf['videoUrl']?.toString();
+      }
+
+      // If no ACF video, try to extract common embed/source patterns from content
+      if (videoUrl == null && content != null && content.isNotEmpty) {
+        final c = content;
+
+        // 1) Check for iframe src="..." (covers embed and oembed HTML)
+        final iframeSrc = RegExp(
+          r'''<iframe[^>]+src=["']([^"']+)["'][^>]*>''',
+          caseSensitive: false,
+        );
+        final iframeMatch = iframeSrc.firstMatch(c);
+        if (iframeMatch != null) {
+          videoUrl = iframeMatch.group(1);
+        }
+
+        // 2) YouTube watch / youtu.be / embed patterns
+        if (videoUrl == null) {
+          final youtubeWatch = RegExp(
+            r'(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})',
+          );
+          final m = youtubeWatch.firstMatch(c);
+          if (m != null) {
+            videoUrl = 'https://www.youtube.com/embed/${m.group(1)}';
+          }
+        }
+
+        // 3) YouTube embed direct (youtube.com/embed/ID)
+        if (videoUrl == null) {
+          final embedYt = RegExp(r'youtube\.com\/embed\/([A-Za-z0-9_-]{11})');
+          final m2 = embedYt.firstMatch(c);
+          if (m2 != null)
+            videoUrl = 'https://www.youtube.com/embed/${m2.group(1)}';
+        }
+
+        // 4) Vimeo embed/player patterns
+        if (videoUrl == null) {
+          final vimeoEmbed = RegExp(r'player\.vimeo\.com\/video\/(\d+)');
+          final vm = vimeoEmbed.firstMatch(c);
+          if (vm != null)
+            videoUrl = 'https://player.vimeo.com/video/${vm.group(1)}';
+        }
+
+        // 5) Vimeo standard links vimeo.com/ID
+        if (videoUrl == null) {
+          final vimeoStd = RegExp(r'vimeo\.com\/(\d+)');
+          final vm2 = vimeoStd.firstMatch(c);
+          if (vm2 != null)
+            videoUrl = 'https://player.vimeo.com/video/${vm2.group(1)}';
+        }
+
+        // 6) Direct mp4 links
+        if (videoUrl == null) {
+          final mp4 = RegExp(r'''https?:\/\/[^\s"']+\.mp4(\?[^\s"']*)?''');
+          final m3 = mp4.firstMatch(c);
+          if (m3 != null) videoUrl = m3.group(0);
+        }
+      }
+
+      return videoUrl;
+    }
+
     return Post(
       id: json['id'] ?? '',
       title: json['title'] ?? '',
@@ -50,6 +126,17 @@ class Post {
       imageAlt: json['featuredImage']?['node']?['altText'],
       authorName: json['author']?['node']?['name'],
       categories: extractCategories(json['categories']?['edges']),
+      videoUrl: extractVideoUrl(json['content']?.toString(), json['acf']),
+      videoType: (() {
+        final v = extractVideoUrl(json['content']?.toString(), json['acf']);
+        if (v == null) return null;
+        final low = v.toLowerCase();
+        if (low.contains('.mp4')) return 'mp4';
+        if (low.contains('youtube') || low.contains('youtu.be'))
+          return 'youtube';
+        if (low.contains('vimeo')) return 'vimeo';
+        return 'embed';
+      })(),
     );
   }
 
@@ -65,6 +152,8 @@ class Post {
       'imageAlt': imageAlt,
       'authorName': authorName,
       'categories': categories,
+      'videoUrl': videoUrl,
+      'videoType': videoType,
     };
   }
 }

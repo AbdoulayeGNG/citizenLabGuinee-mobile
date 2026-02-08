@@ -39,7 +39,7 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Hero Section (hauteur réduite)
-                /*   Container(
+                  /*   Container(
                     height: 120,
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -70,34 +70,98 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16), */
 
-                  // Dernières actualités
-                  const SectionHeader(title: 'Actualités'),
+                  // Dernières actualités (show max 2 + 'Voir tout')
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Actualités',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  color: Theme.of(context).primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/news'),
+                          child: const Text('Voir tout'),
+                        ),
+                      ],
+                    ),
+                  ),
                   SizedBox(
                     height: 180,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      itemCount: apiService.posts.length,
+                      itemCount: apiService.posts.length > 4
+                          ? 4
+                          : apiService.posts.length,
                       itemBuilder: (context, index) {
                         final post = apiService.posts[index];
-                        return PostCard(post: post);
+                        return PostCard(
+                          post: post,
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            '/article',
+                            arguments: {'id': post.slug},
+                          ),
+                        );
                       },
                     ),
                   ),
 
                   const SizedBox(height: 12),
 
-                  // Podcast
-                  const SectionHeader(title: 'Podcasts recents'),
+                  // Podcasts (show max 2 + 'Voir tout')
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Podcasts récents',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  color: Theme.of(context).primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/podcasts'),
+                          child: const Text('Voir tout'),
+                        ),
+                      ],
+                    ),
+                  ),
                   SizedBox(
-                    height: 140,
+                    height: 150,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      itemCount: apiService.posts.length > 6
-                          ? 6
+                      itemCount: apiService.posts.length > 4
+                          ? 4
                           : apiService.posts.length,
                       itemBuilder: (context, index) {
                         final post = apiService.posts[index];
-                        return PostCard(post: post);
+                        return PostCard(
+                          post: post,
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            '/article',
+                            arguments: {'id': post.slug},
+                          ),
+                        );
                       },
                     ),
                   ),
@@ -176,20 +240,21 @@ class _QuickAccessCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
                   color: Theme.of(context).primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: Theme.of(context).primaryColor),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   title,
                   style: Theme.of(
                     context,
                   ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                  maxLines: 1,
                 ),
               ),
             ],

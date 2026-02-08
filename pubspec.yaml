@@ -59,6 +59,8 @@ dependencies:
   dio: ^5.1.2
   path_provider: ^2.0.15
   syncfusion_flutter_pdfviewer: ^32.1.25
+  webview_flutter: ^4.13.1
+  video_player: ^2.10.1
   # Note: no storage permissions needed for application documents directory.
 
 dev_dependencies:

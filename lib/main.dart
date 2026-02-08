@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'screens/home_screen.dart';
 import 'models/hive_post.dart';
 import 'models/hive_category.dart';
@@ -12,6 +13,8 @@ import 'routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Initialize locale/date formatting for intl (fr_FR)
+  await initializeDateFormatting('fr_FR');
   await Hive.initFlutter();
 
   // Register manual adapters so Hive can store typed objects

@@ -58,6 +58,11 @@ String findLatestPostsAPI({int first = 10, String? after}) {
                 altText
               }
             }
+            acf {
+              video_url
+              video
+              videoUrl
+            }
             categories {
               edges {
                 node {
@@ -97,6 +102,11 @@ String newsPagePostsQuery({int first = 10, String? after}) {
                 altText
               }
             }
+            acf {
+              video_url
+              video
+              videoUrl
+            }
             author {
               node {
                 name
@@ -135,6 +145,11 @@ String getNodeByURI(String uri) {
               sourceUrl
               altText
             }
+          }
+          acf {
+            video_url
+            video
+            videoUrl
           }
           categories {
             edges {
@@ -188,6 +203,50 @@ String getNodeByURI(String uri) {
                   }
                 }
               }
+            }
+          }
+        }
+      }
+    }
+  ''';
+}
+
+// Requête : Récupérer un Post par slug (idType: SLUG)
+String getPostBySlugQuery() {
+  return '''
+    query GetPostBySlug(\$slug: ID!) {
+      post(id: \$slug, idType: SLUG) {
+        id
+        title
+        content
+        excerpt
+        date
+        slug
+        featuredImage {
+          node {
+            sourceUrl
+            altText
+          }
+        }
+          acf {
+            video_url
+            video
+            videoUrl
+          }
+        categories {
+          edges {
+            node {
+              id
+              name
+              slug
+            }
+          }
+        }
+        author {
+          node {
+            name
+            avatar {
+              url
             }
           }
         }

@@ -28,6 +28,11 @@ class HivePost {
   // @HiveField(7)
   final String? imageAlt;
 
+  // @HiveField(11)
+  final String? videoUrl;
+  // @HiveField(12)
+  final String? videoType;
+
   // @HiveField(8)
   final String? authorName;
 
@@ -46,6 +51,8 @@ class HivePost {
     this.date,
     this.imageUrl,
     this.imageAlt,
+    this.videoUrl,
+    this.videoType,
     this.authorName,
     this.categories = const [],
     required this.cachedAt,
@@ -62,6 +69,8 @@ class HivePost {
       date: _parseDate(post.date),
       imageUrl: post.imageUrl,
       imageAlt: post.imageAlt,
+      videoUrl: post.videoUrl,
+      videoType: post.videoType,
       authorName: post.authorName,
       categories: post.categories ?? [],
       cachedAt: DateTime.now(),
@@ -93,6 +102,8 @@ class HivePost {
       'date': date?.toIso8601String(),
       'imageUrl': imageUrl,
       'imageAlt': imageAlt,
+      'videoUrl': videoUrl,
+      'videoType': videoType,
       'authorName': authorName,
       'categories': categories,
       'cachedAt': cachedAt.toIso8601String(),
@@ -112,6 +123,8 @@ class HivePost {
           : null,
       imageUrl: json['imageUrl'] as String?,
       imageAlt: json['imageAlt'] as String?,
+      videoUrl: json['videoUrl'] as String?,
+      videoType: json['videoType'] as String?,
       authorName: json['authorName'] as String?,
       categories: List<String>.from(json['categories'] as List? ?? []),
       cachedAt: json['cachedAt'] != null

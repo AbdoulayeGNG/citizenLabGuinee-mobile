@@ -217,6 +217,12 @@ class ApiService extends ChangeNotifier {
           .map((json) => Post.fromJson(Map<String, dynamic>.from(json)))
           .toList();
 
+      // Debug: log how many posts contain a detected video URL
+      final videoCount = _posts.where((p) => p.videoUrl != null).length;
+      debugPrint(
+        'ApiService._fetchPosts(): detected $videoCount posts with videoUrl',
+      );
+
       // Save to Hive only
       await _postsRepo.savePosts(_posts);
       _safeNotify();
@@ -325,14 +331,61 @@ class ApiService extends ChangeNotifier {
 
   Future<Post?> fetchPostById(String id) async {
     try {
-      final nodeData = await _graphqlService.fetchNodeByURI(id);
-      if (nodeData.isNotEmpty) {
+      // Try to fetch by URI first (if id is a URI-like string)
+      Map<String, dynamic> nodeData = {};
+      try {
+        nodeData = await _graphqlService.fetchNodeByURI(id);
+      } catch (_) {
+        nodeData = {};
+      }
+
+      // If nodeByUri returned empty or caused issues, try fetch by slug
+      if (nodeData.isEmpty) {
+        // Ensure slug form (remove leading/trailing slashes)
+        var slug = id;
+        if (slug.startsWith('/')) slug = slug.replaceAll(RegExp(r'^/+'), '');
+        if (slug.endsWith('/')) slug = slug.replaceAll(RegExp(r'/+\$'), '');
+        try {
+          final postData = await _graphqlService.fetchPostBySlug(slug);
+          if (postData.isNotEmpty) {
+            return Post.fromJson(Map<String, dynamic>.from(postData));
+          }
+        } catch (e) {
+          debugPrint('Erreur fetchPostBySlug: $e');
+        }
+      } else {
         return Post.fromJson(Map<String, dynamic>.from(nodeData));
       }
     } catch (e) {
       debugPrint('Erreur fetch post: $e');
     }
     return null;
+  }
+
+  /// Return a Post from local Hive cache if available (no network).
+  Future<Post?> getCachedPost(String id) async {
+    try {
+      final hivePost = await _postsRepo.getPostById(id);
+      if (hivePost == null) return null;
+      // Convert HivePost to Post
+      return Post(
+        id: hivePost.id,
+        title: hivePost.title,
+        slug: hivePost.slug ?? '',
+        content: hivePost.content ?? '',
+        excerpt: hivePost.excerpt,
+        date: hivePost.date?.toIso8601String() ?? '',
+        imageUrl: hivePost.imageUrl,
+        imageAlt: hivePost.imageAlt,
+        authorName: hivePost.authorName,
+        categories: hivePost.categories,
+        videoUrl: hivePost.videoUrl,
+        videoType: hivePost.videoType,
+      );
+    } catch (e) {
+      debugPrint('ApiService.getCachedPost error: $e');
+      return null;
+    }
   }
 
   Future<page_model.Page?> fetchPageByUri(String uri) async {

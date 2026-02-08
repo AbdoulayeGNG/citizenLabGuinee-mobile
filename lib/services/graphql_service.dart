@@ -22,32 +22,65 @@ class GraphQLService {
   Future<QueryResult> executeQuery(
     String query, {
     Map<String, dynamic>? variables,
-    Duration timeout = const Duration(seconds: 30),
+    Duration timeout = const Duration(seconds: 15),
+    int maxRetries = 2,
   }) async {
-    final QueryOptions options = QueryOptions(
-      document: gql(query),
-      variables: variables ?? {},
-    );
+    // Helper to strip ACF blocks from queries when the WP schema doesn't expose them
+    String stripAcfBlocks(String q) {
+      return q.replaceAll(RegExp(r'acf\s*\{[^}]*\}', multiLine: true), '');
+    }
 
-    try {
-      final result = await graphQLClient
-          .query(options)
-          .timeout(timeout)
-          .catchError((error) {
-            throw GraphQLException(
-              'Erreur réseau lors de la requête GraphQL: $error',
-            );
-          });
+    String currentQuery = query;
+    bool acfStripped = false;
 
-      if (result.hasException) {
-        throw GraphQLException(
-          'Erreur GraphQL: ${result.exception.toString()}',
+    int attempt = 0;
+    while (true) {
+      attempt++;
+      final QueryOptions options = QueryOptions(
+        document: gql(currentQuery),
+        variables: variables ?? {},
+      );
+
+      try {
+        final result = await graphQLClient
+            .query(options)
+            .timeout(timeout)
+            .catchError((error) {
+              throw GraphQLException(
+                'Erreur réseau lors de la requête GraphQL: $error',
+              );
+            });
+
+        if (result.hasException) {
+          throw GraphQLException(
+            'Erreur GraphQL: ${result.exception.toString()}',
+          );
+        }
+
+        return result;
+      } catch (e) {
+        final message = e.toString();
+
+        // If the server rejects 'acf' field, strip acf blocks and retry once
+        if (!acfStripped && message.contains('Cannot query field "acf"')) {
+          acfStripped = true;
+          currentQuery = stripAcfBlocks(currentQuery);
+          print(
+            '[GraphQLService] Detected missing ACF field, retrying without acf blocks',
+          );
+          continue;
+        }
+
+        // If we've exhausted retries, rethrow the exception
+        if (attempt > maxRetries) rethrow;
+
+        // On transient errors (timeout / network), wait exponential backoff then retry
+        final backoffMillis = 300 * (1 << (attempt - 1));
+        print(
+          '[GraphQLService] query failed (attempt $attempt) - retrying in ${backoffMillis}ms: $e',
         );
+        await Future.delayed(Duration(milliseconds: backoffMillis));
       }
-
-      return result;
-    } catch (e) {
-      rethrow;
     }
   }
 
@@ -97,6 +130,19 @@ class GraphQLService {
     );
 
     return result.data?['nodeByUri'] ?? {};
+  }
+
+  /// Récupérer un Post par slug (idType: SLUG)
+  Future<Map<String, dynamic>> fetchPostBySlug(String slug) async {
+    final result = await executeQuery(
+      getPostBySlugQuery(),
+      variables: {'slug': slug},
+    );
+
+    // GraphQL returns { 'post': { ... } }
+    final post = result.data?['post'];
+    if (post is Map<String, dynamic>) return Map<String, dynamic>.from(post);
+    return {};
   }
 
   /// Récupérer tous les membres de l'équipe

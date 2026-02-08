@@ -9,6 +9,9 @@ import 'screens/events_screen.dart';
 import 'screens/documents_screen.dart';
 import 'screens/offline_test_screen.dart';
 import 'screens/projects_page.dart';
+import 'screens/about_screen.dart';
+import 'screens/news_list_screen.dart';
+import 'screens/podcasts_list_screen.dart';
 
 class AppRoutes {
   static const String home = '/';
@@ -22,6 +25,9 @@ class AppRoutes {
   static const String community = '/community';
   static const String documents = '/documents';
   static const String offlineTest = '/offline-test';
+  static const String about = '/about';
+  static const String news = '/news';
+  static const String podcasts = '/podcasts';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -81,6 +87,15 @@ class AppRoutes {
 
       case offlineTest:
         return MaterialPageRoute(builder: (_) => const OfflineTestScreen());
+
+      case about:
+        return MaterialPageRoute(builder: (_) => const AboutScreen());
+
+      case news:
+        return MaterialPageRoute(builder: (_) => const NewsListScreen());
+
+      case podcasts:
+        return MaterialPageRoute(builder: (_) => const PodcastsListScreen());
 
       default:
         return MaterialPageRoute(

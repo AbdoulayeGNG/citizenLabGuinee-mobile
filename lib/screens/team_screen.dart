@@ -138,11 +138,12 @@ class TeamScreen extends StatelessWidget {
                     ? CachedNetworkImage(
                         imageUrl: member.photoUrl!,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) =>
-                            Container(
-                              color: Colors.grey[200],
-                              child: const Center(child: CircularProgressIndicator()),
-                            ),
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
                         errorWidget: (context, url, error) => Container(
                           color: Colors.grey[300],
                           child: const Icon(
@@ -166,7 +167,10 @@ class TeamScreen extends StatelessWidget {
             // Informations à droite
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -195,7 +199,8 @@ class TeamScreen extends StatelessWidget {
                                     ?.copyWith(color: Colors.grey[600]),
                               ),
                             )
-                          else if (member.description != null && member.description!.isNotEmpty)
+                          else if (member.description != null &&
+                              member.description!.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(top: 2),
                               child: Text(
@@ -207,7 +212,8 @@ class TeamScreen extends StatelessWidget {
                               ),
                             ),
                           // Email si disponible
-                          if (member.description != null && member.description!.isNotEmpty)
+                          if (member.description != null &&
+                              member.description!.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(top: 2),
                               child: Text(
@@ -233,7 +239,8 @@ class TeamScreen extends StatelessWidget {
                       Wrap(
                         spacing: 2,
                         children: [
-                          if (member.facebook != null && member.facebook!.isNotEmpty)
+                          if (member.facebook != null &&
+                              member.facebook!.isNotEmpty)
                             SizedBox(
                               width: 28,
                               height: 28,
@@ -245,13 +252,15 @@ class TeamScreen extends StatelessWidget {
                                 ),
                                 onPressed: () async {
                                   final uri = Uri.parse(member.facebook!);
-                                  if (await canLaunchUrl(uri)) await launchUrl(uri);
+                                  if (await canLaunchUrl(uri))
+                                    await launchUrl(uri);
                                 },
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
                               ),
                             ),
-                          if (member.linkedin != null && member.linkedin!.isNotEmpty)
+                          if (member.linkedin != null &&
+                              member.linkedin!.isNotEmpty)
                             SizedBox(
                               width: 28,
                               height: 28,
@@ -263,13 +272,15 @@ class TeamScreen extends StatelessWidget {
                                 ),
                                 onPressed: () async {
                                   final uri = Uri.parse(member.linkedin!);
-                                  if (await canLaunchUrl(uri)) await launchUrl(uri);
+                                  if (await canLaunchUrl(uri))
+                                    await launchUrl(uri);
                                 },
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
                               ),
                             ),
-                          if (member.twitter != null && member.twitter!.isNotEmpty)
+                          if (member.twitter != null &&
+                              member.twitter!.isNotEmpty)
                             SizedBox(
                               width: 28,
                               height: 28,
@@ -281,13 +292,15 @@ class TeamScreen extends StatelessWidget {
                                 ),
                                 onPressed: () async {
                                   final uri = Uri.parse(member.twitter!);
-                                  if (await canLaunchUrl(uri)) await launchUrl(uri);
+                                  if (await canLaunchUrl(uri))
+                                    await launchUrl(uri);
                                 },
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
                               ),
                             ),
-                          if (member.instagram != null && member.instagram!.isNotEmpty)
+                          if (member.instagram != null &&
+                              member.instagram!.isNotEmpty)
                             SizedBox(
                               width: 28,
                               height: 28,
@@ -299,7 +312,8 @@ class TeamScreen extends StatelessWidget {
                                 ),
                                 onPressed: () async {
                                   final uri = Uri.parse(member.instagram!);
-                                  if (await canLaunchUrl(uri)) await launchUrl(uri);
+                                  if (await canLaunchUrl(uri))
+                                    await launchUrl(uri);
                                 },
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),

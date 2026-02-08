@@ -24,6 +24,14 @@ class TeamMember {
     this.description,
   });
 
+  /// Backwards-compatible getter used by UI code that expected `imageUrl`.
+  /// Returns an empty string when no photo is available.
+  String get imageUrl => photoUrl ?? '';
+
+  /// Backwards-compatible optional image alt text placeholder.
+  /// Some code expects `imageAlt`; provide a nullable getter.
+  String? get imageAlt => null;
+
   /// Factory helper pour parser la réponse GraphQL
   factory TeamMember.fromGraphql(Map<String, dynamic> json) {
     // DEBUG: affiche les données brutes
@@ -57,7 +65,8 @@ class TeamMember {
     }
 
     // Si pas de réseaux sociaux directs, essayer de les extraire de la description
-    final description = json['excerpt'] as String? ?? json['description'] as String?;
+    final description =
+        json['excerpt'] as String? ?? json['description'] as String?;
     if (description != null && description.isNotEmpty) {
       facebook = facebook ?? _extractSocialLink(description, 'facebook');
       linkedin = linkedin ?? _extractSocialLink(description, 'linkedin');
