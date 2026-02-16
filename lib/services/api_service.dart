@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';
+import 'package:flutter/foundation.dart' show compute;
 import '../models/post.dart';
 import '../models/menu_item.dart';
 import '../models/category.dart';
@@ -9,7 +10,27 @@ import '../models/page.dart' as page_model;
 import '../repositories/posts_repository.dart';
 import '../repositories/categories_repository.dart';
 import '../repositories/teams_repository.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'graphql_service.dart';
+
+// Top-level helpers for isolate parsing. These run in background isolates
+// and must only use simple serializable types as arguments/return values.
+List<Map<String, dynamic>> _parsePostsToSerializable(List<dynamic> rawList) {
+  return rawList.map<Map<String, dynamic>>((raw) {
+    final json = Map<String, dynamic>.from(raw as Map);
+    final post = Post.fromJson(json);
+    return post.toJson();
+  }).toList();
+}
+
+Map<String, dynamic>? _parseSinglePostToSerializable(Map<String, dynamic> raw) {
+  try {
+    final post = Post.fromJson(raw);
+    return post.toJson();
+  } catch (e) {
+    return null;
+  }
+}
 
 class ApiService extends ChangeNotifier {
   final Connectivity _connectivity = Connectivity();
@@ -128,6 +149,19 @@ class ApiService extends ChangeNotifier {
         debugPrint(
           'ApiService._loadCachedData(): loaded ${_posts.length} posts from Hive',
         );
+
+          // Preload featured images into cache (non-blocking)
+          for (final p in _posts) {
+            try {
+              final url = p.imageUrl;
+              if (url != null && url.isNotEmpty) {
+                final provider = CachedNetworkImageProvider(url);
+                provider.resolve(const ImageConfiguration());
+              }
+            } catch (e) {
+              debugPrint('Precache post image failed: $e');
+            }
+          }
       }
 
       final hiveCategories = await _categoriesRepo.getAllCategoriesFromCache();
@@ -168,6 +202,19 @@ class ApiService extends ChangeNotifier {
         debugPrint(
           'ApiService._loadCachedData(): loaded ${_teamMembers.length} team members from Hive',
         );
+
+        // Preload team member avatars into cache (non-blocking)
+        for (final tm in _teamMembers) {
+          try {
+            final url = tm.photoUrl;
+            if (url != null && url.isNotEmpty) {
+              final provider = CachedNetworkImageProvider(url);
+              provider.resolve(const ImageConfiguration());
+            }
+          } catch (e) {
+            debugPrint('Precache team avatar failed: $e');
+          }
+        }
       }
 
       notifyListeners();
@@ -213,8 +260,28 @@ class ApiService extends ChangeNotifier {
   Future<void> _fetchPosts() async {
     try {
       final postsData = await _graphqlService.fetchLatestPosts(first: 20);
-      _posts = postsData
-          .map((json) => Post.fromJson(Map<String, dynamic>.from(json)))
+
+      // Parse posts in a background isolate to avoid heavy regexp/JSON work on UI thread.
+      final List<Map<String, dynamic>> serialized = await compute(
+        _parsePostsToSerializable,
+        postsData,
+      );
+
+      _posts = serialized
+          .map((m) => Post(
+                id: m['id'] ?? '',
+                title: m['title'] ?? '',
+                slug: m['slug'] ?? '',
+                content: m['content'] ?? '',
+                excerpt: m['excerpt'],
+                date: m['date'] ?? '',
+                imageUrl: m['imageUrl'],
+                imageAlt: m['imageAlt'],
+                authorName: m['authorName'],
+                categories: (m['categories'] as List?)?.cast<String>(),
+                videoUrl: m['videoUrl'],
+                videoType: m['videoType'],
+              ))
           .toList();
 
       // Debug: log how many posts contain a detected video URL
@@ -354,7 +421,27 @@ class ApiService extends ChangeNotifier {
           debugPrint('Erreur fetchPostBySlug: $e');
         }
       } else {
-        return Post.fromJson(Map<String, dynamic>.from(nodeData));
+        // Parse single post in isolate to avoid heavy main-thread parsing
+        final Map<String, dynamic>? serialized = await compute(
+          _parseSinglePostToSerializable,
+          Map<String, dynamic>.from(nodeData),
+        );
+        if (serialized != null) {
+          return Post(
+            id: serialized['id'] ?? '',
+            title: serialized['title'] ?? '',
+            slug: serialized['slug'] ?? '',
+            content: serialized['content'] ?? '',
+            excerpt: serialized['excerpt'],
+            date: serialized['date'] ?? '',
+            imageUrl: serialized['imageUrl'],
+            imageAlt: serialized['imageAlt'],
+            authorName: serialized['authorName'],
+            categories: (serialized['categories'] as List?)?.cast<String>(),
+            videoUrl: serialized['videoUrl'],
+            videoType: serialized['videoType'],
+          );
+        }
       }
     } catch (e) {
       debugPrint('Erreur fetch post: $e');

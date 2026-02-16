@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/team_member.dart';
 
 /// Vertical card for grid layout (2-3 columns)
@@ -100,16 +101,28 @@ class TeamCard extends StatelessWidget {
       icons.add(
         IconButton(
           onPressed: () => _launchUrl(url),
-          icon: Icon(icon, color: color, size: 20),
+          icon: FaIcon(icon, color: color, size: 18),
           tooltip: url,
         ),
       );
     }
 
-    addIcon(member.facebook, Icons.facebook, const Color(0xFF1877F2));
-    addIcon(member.linkedin, Icons.link, const Color(0xFF0A66C2));
-    addIcon(member.twitter, Icons.alternate_email, const Color(0xFF1DA1F2));
-    addIcon(member.instagram, Icons.camera_alt, const Color(0xFFC32AA3));
+    addIcon(
+      member.facebook,
+      FontAwesomeIcons.facebook,
+      const Color(0xFF1877F2),
+    );
+    addIcon(
+      member.linkedin,
+      FontAwesomeIcons.linkedin,
+      const Color(0xFF0A66C2),
+    );
+    addIcon(member.twitter, FontAwesomeIcons.x, const Color(0xFF1DA1F2));
+    addIcon(
+      member.instagram,
+      FontAwesomeIcons.instagram,
+      const Color(0xFFC32AA3),
+    );
 
     if (icons.isEmpty) {
       return const SizedBox.shrink();
@@ -252,17 +265,29 @@ class HorizontalTeamCard extends StatelessWidget {
           height: 36,
           child: IconButton(
             onPressed: () => _launchUrl(url),
-            icon: Icon(icon, color: color, size: 18),
+            icon: FaIcon(icon, color: color, size: 18),
             padding: EdgeInsets.zero,
           ),
         ),
       );
     }
 
-    addIcon(member.facebook, Icons.facebook, const Color(0xFF1877F2));
-    addIcon(member.linkedin, Icons.link, const Color(0xFF0A66C2));
-    addIcon(member.twitter, Icons.alternate_email, const Color(0xFF1DA1F2));
-    addIcon(member.instagram, Icons.camera_alt, const Color(0xFFC32AA3));
+    addIcon(
+      member.facebook,
+      FontAwesomeIcons.facebook,
+      const Color(0xFF1877F2),
+    );
+    addIcon(
+      member.linkedin,
+      FontAwesomeIcons.linkedin,
+      const Color(0xFF0A66C2),
+    );
+    addIcon(member.twitter, FontAwesomeIcons.x, const Color(0xFF1DA1F2));
+    addIcon(
+      member.instagram,
+      FontAwesomeIcons.instagram,
+      const Color(0xFFC32AA3),
+    );
 
     if (icons.isEmpty) {
       return const SizedBox.shrink();

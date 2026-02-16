@@ -149,10 +149,42 @@ class GraphQLService {
   Future<List<Map<String, dynamic>>> fetchTeamMembers() async {
     final result = await executeQuery(getAllMembers());
 
-    // La requête retourne users.edges - on extrait les nodes
-    final edges = result.data?['users']?['edges'] ?? [];
-    print('[DEBUG GraphQLService] Réponse users: ${result.data}');
+    // Try to read equipes.nodes first (new query), fallback to users.edges for older schema
+    print('[DEBUG GraphQLService] fetchTeamMembers response: ${result.data}');
 
+    final equipesNodes = result.data?['equipes']?['nodes'];
+    if (equipesNodes is List) {
+      return List<Map<String, dynamic>>.from(
+        equipesNodes.map((node) {
+          final m = Map<String, dynamic>.from(node as Map<String, dynamic>);
+
+          // Normalize to the shape TeamMember.fromGraphql expects
+          if ((m['name'] == null || (m['name'] as String).isEmpty) &&
+              m['title'] != null) {
+            m['name'] = m['title'];
+          }
+
+          // Map featuredImage.node.mediaItemUrl/sourceUrl -> avatar.url
+          final featured = m['featuredImage'];
+          if (featured is Map && featured['node'] is Map) {
+            final media = featured['node'] as Map<String, dynamic>;
+            final mediaUrl =
+                media['mediaItemUrl'] ?? media['sourceUrl'] ?? media['url'];
+            if (mediaUrl != null) {
+              m['avatar'] = {'url': mediaUrl};
+            }
+            if (media['altText'] != null) {
+              m['altText'] = media['altText'];
+            }
+          }
+
+          return m;
+        }),
+      );
+    }
+
+    // Fallback to legacy users query
+    final edges = result.data?['users']?['edges'] ?? [];
     return List<Map<String, dynamic>>.from(
       edges.map((edge) => edge['node'] ?? {}),
     );

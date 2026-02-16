@@ -61,7 +61,11 @@ dependencies:
   syncfusion_flutter_pdfviewer: ^32.1.25
   webview_flutter: ^4.13.1
   video_player: ^2.10.1
+  # YouTube player for inline playback
+  youtube_player_iframe: ^5.2.2
+  better_player: ^0.0.84
   # Note: no storage permissions needed for application documents directory.
+  font_awesome_flutter: ^10.4.0
 
 dev_dependencies:
   flutter_test:

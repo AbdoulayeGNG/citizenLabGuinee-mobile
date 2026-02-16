@@ -113,38 +113,49 @@ class TeamScreen extends StatelessWidget {
   }
 
   Widget _buildMemberRowCard(BuildContext context, TeamMember member) {
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: SizedBox(
-        height: 140,
-        child: Row(
-          children: [
-            // Image à gauche - occupe toute la hauteur avec coins arrondis
-            Container(
-              width: 130,
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
+    return InkWell(
+      onTap: () => _showMemberDetail(context, member),
+      child: Card(
+        elevation: 1,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: SizedBox(
+          height: 140,
+          child: Row(
+            children: [
+              // Image à gauche
+              Container(
+                width: 130,
+                decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    bottomLeft: Radius.circular(12),
+                  ),
                 ),
-              ),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                ),
-                child: member.photoUrl != null && member.photoUrl!.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: member.photoUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: Colors.grey[200],
-                          child: const Center(
-                            child: CircularProgressIndicator(),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    bottomLeft: Radius.circular(12),
+                  ),
+                  child: member.photoUrl != null && member.photoUrl!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: member.photoUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[200],
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
                           ),
-                        ),
-                        errorWidget: (context, url, error) => Container(
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.grey[300],
+                            child: const Icon(
+                              Icons.person,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        )
+                      : Container(
                           color: Colors.grey[300],
                           child: const Icon(
                             Icons.person,
@@ -152,184 +163,238 @@ class TeamScreen extends StatelessWidget {
                             color: Colors.grey,
                           ),
                         ),
-                      )
-                    : Container(
-                        color: Colors.grey[300],
-                        child: const Icon(
-                          Icons.person,
-                          size: 48,
-                          color: Colors.grey,
+                ),
+              ),
+
+              // Droite: nom + réseaux
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        member.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-              ),
-            ),
 
-            // Informations à droite
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Nom, rôle et description
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            member.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          if (member.role != null && member.role!.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text(
-                                member.role!,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(color: Colors.grey[600]),
-                              ),
-                            )
-                          else if (member.description != null &&
-                              member.description!.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text(
-                                member.description!,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(color: Colors.grey[600]),
-                              ),
-                            ),
-                          // Email si disponible
-                          if (member.description != null &&
-                              member.description!.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text(
-                                member.description!.split('\n').first,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(
-                                      color: Colors.grey[500],
-                                      fontSize: 11,
-                                    ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-
-                    // Icônes de contact - affichage horizontal compact
-                    if (member.facebook != null ||
-                        member.linkedin != null ||
-                        member.twitter != null ||
-                        member.instagram != null)
-                      Wrap(
-                        spacing: 2,
+                      Row(
                         children: [
                           if (member.facebook != null &&
                               member.facebook!.isNotEmpty)
-                            SizedBox(
-                              width: 28,
-                              height: 28,
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.facebook,
-                                  size: 16,
-                                  color: Color(0xFF1877F2),
-                                ),
-                                onPressed: () async {
-                                  final uri = Uri.parse(member.facebook!);
-                                  if (await canLaunchUrl(uri))
-                                    await launchUrl(uri);
-                                },
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.facebook,
+                                color: Color(0xFF1877F2),
                               ),
+                              onPressed: () async {
+                                final uri = Uri.parse(member.facebook!);
+                                if (await canLaunchUrl(uri))
+                                  await launchUrl(uri);
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
                           if (member.linkedin != null &&
                               member.linkedin!.isNotEmpty)
-                            SizedBox(
-                              width: 28,
-                              height: 28,
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.link,
-                                  size: 16,
-                                  color: Color(0xFF0A66C2),
-                                ),
-                                onPressed: () async {
-                                  final uri = Uri.parse(member.linkedin!);
-                                  if (await canLaunchUrl(uri))
-                                    await launchUrl(uri);
-                                },
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.link,
+                                color: Color(0xFF0A66C2),
                               ),
+                              onPressed: () async {
+                                final uri = Uri.parse(member.linkedin!);
+                                if (await canLaunchUrl(uri))
+                                  await launchUrl(uri);
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
                           if (member.twitter != null &&
                               member.twitter!.isNotEmpty)
-                            SizedBox(
-                              width: 28,
-                              height: 28,
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.alternate_email,
-                                  size: 16,
-                                  color: Color(0xFF1DA1F2),
-                                ),
-                                onPressed: () async {
-                                  final uri = Uri.parse(member.twitter!);
-                                  if (await canLaunchUrl(uri))
-                                    await launchUrl(uri);
-                                },
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.alternate_email,
+                                color: Color(0xFF1DA1F2),
                               ),
+                              onPressed: () async {
+                                final uri = Uri.parse(member.twitter!);
+                                if (await canLaunchUrl(uri))
+                                  await launchUrl(uri);
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
                           if (member.instagram != null &&
                               member.instagram!.isNotEmpty)
-                            SizedBox(
-                              width: 28,
-                              height: 28,
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.camera_alt,
-                                  size: 16,
-                                  color: Color(0xFFC32AA3),
-                                ),
-                                onPressed: () async {
-                                  final uri = Uri.parse(member.instagram!);
-                                  if (await canLaunchUrl(uri))
-                                    await launchUrl(uri);
-                                },
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.camera_alt,
+                                color: Color(0xFFC32AA3),
                               ),
+                              onPressed: () async {
+                                final uri = Uri.parse(member.instagram!);
+                                if (await canLaunchUrl(uri))
+                                  await launchUrl(uri);
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
                         ],
-                      )
-                    else
-                      const SizedBox.shrink(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showMemberDetail(BuildContext context, TeamMember m) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.12),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl: m.photoUrl ?? '',
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              Container(color: Colors.grey[300]),
+                          errorWidget: (context, url, error) => Container(
+                            color: Colors.grey[300],
+                            child: const Icon(
+                              Icons.person,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      m.name,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 6),
+                    if (m.role != null && m.role!.isNotEmpty)
+                      Text(
+                        m.role!,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    const SizedBox(height: 18),
+                    if (m.description != null && m.description!.isNotEmpty)
+                      Text(
+                        m.description!,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey[700],
+                          height: 1.6,
+                        ),
+                      ),
+                    const SizedBox(height: 20),
+                    // Socials
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (m.facebook != null && m.facebook!.isNotEmpty)
+                          IconButton(
+                            onPressed: () async {
+                              final uri = Uri.parse(m.facebook!);
+                              if (await canLaunchUrl(uri)) await launchUrl(uri);
+                            },
+                            icon: const Icon(
+                              Icons.facebook,
+                              color: Color(0xFF1877F2),
+                            ),
+                          ),
+                        if (m.linkedin != null && m.linkedin!.isNotEmpty)
+                          IconButton(
+                            onPressed: () async {
+                              final uri = Uri.parse(m.linkedin!);
+                              if (await canLaunchUrl(uri)) await launchUrl(uri);
+                            },
+                            icon: const Icon(
+                              Icons.link,
+                              color: Color(0xFF0A66C2),
+                            ),
+                          ),
+                        if (m.twitter != null && m.twitter!.isNotEmpty)
+                          IconButton(
+                            onPressed: () async {
+                              final uri = Uri.parse(m.twitter!);
+                              if (await canLaunchUrl(uri)) await launchUrl(uri);
+                            },
+                            icon: const Icon(
+                              Icons.alternate_email,
+                              color: Color(0xFF1DA1F2),
+                            ),
+                          ),
+                        if (m.instagram != null && m.instagram!.isNotEmpty)
+                          IconButton(
+                            onPressed: () async {
+                              final uri = Uri.parse(m.instagram!);
+                              if (await canLaunchUrl(uri)) await launchUrl(uri);
+                            },
+                            icon: const Icon(
+                              Icons.camera_alt,
+                              color: Color(0xFFC32AA3),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 30),
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 

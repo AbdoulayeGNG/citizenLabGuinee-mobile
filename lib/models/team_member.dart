@@ -65,8 +65,11 @@ class TeamMember {
     }
 
     // Si pas de réseaux sociaux directs, essayer de les extraire de la description
-    final description =
+    final rawDescription =
         json['excerpt'] as String? ?? json['description'] as String?;
+    final description = rawDescription != null && rawDescription.isNotEmpty
+        ? _stripHtml(rawDescription)
+        : null;
     if (description != null && description.isNotEmpty) {
       facebook = facebook ?? _extractSocialLink(description, 'facebook');
       linkedin = linkedin ?? _extractSocialLink(description, 'linkedin');
@@ -80,7 +83,7 @@ class TeamMember {
 
     return TeamMember(
       id: (json['id'] ?? '').toString(),
-      name: json['name'] ?? '',
+      name: (json['name'] ?? json['title'] ?? '') as String,
       role: role,
       team: team,
       photoUrl: photo,
@@ -90,6 +93,20 @@ class TeamMember {
       instagram: instagram,
       description: description,
     );
+  }
+
+  /// Supprimer les balises HTML et décoder quelques entités communes
+  static String _stripHtml(String input) {
+    // Remove HTML tags
+    var s = input.replaceAll(RegExp(r'<[^>]*>'), '');
+    // Decode basic HTML entities
+    s = s.replaceAll('&nbsp;', ' ');
+    s = s.replaceAll('&amp;', '&');
+    s = s.replaceAll('&lt;', '<');
+    s = s.replaceAll('&gt;', '>');
+    s = s.replaceAll('&quot;', '"');
+    s = s.replaceAll('&#39;', "'");
+    return s.trim();
   }
 
   /// Extraire un lien de réseau social depuis la description

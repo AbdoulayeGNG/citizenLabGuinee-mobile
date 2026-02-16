@@ -259,17 +259,25 @@ String getPostBySlugQuery() {
 String getAllMembers() {
   return '''
     query GetAllMembers {
-      users(first: 100) {
-        edges {
-          node {
-            id
-            name
-            email
-            description
-            avatar {
-              url
+      equipes(where: {status: PUBLISH}, first: 100) {
+        nodes {
+          id
+          title
+          featuredImage {
+            node {
+              altText
+              mediaItemUrl
+              sourceUrl
             }
           }
+          social {
+            facebook
+            instagram
+            linkedin
+            twitter
+          }
+          content
+          excerpt
         }
       }
     }

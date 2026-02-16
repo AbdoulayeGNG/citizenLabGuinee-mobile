@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/post.dart';
+import '../features/media/models/video_model.dart';
+import '../features/media/widgets/video_player_screen.dart';
 import '../services/api_service.dart';
 import '../widgets/post_card.dart';
 
@@ -26,6 +29,32 @@ class EmbedPlayerWidget extends StatefulWidget {
 
 class _EmbedPlayerWidgetState extends State<EmbedPlayerWidget> {
   late WebViewController _controller;
+  bool _connectivityTested = false;
+  bool _embedFailed = false;
+  bool _triedNoCookie = false;
+  String? _currentEmbedUrl;
+
+  String _normalizeEmbedUrl(String url) {
+    // Ensure URL is properly formatted for embed
+    String embedUrl = url;
+
+    // If it's a YouTube URL, normalize to embed format
+    if (url.contains('youtube.com') || url.contains('youtu.be')) {
+      if (!url.contains('/embed/')) {
+        // Extract video ID and convert to embed URL
+        final RegExp youtubeRegex = RegExp(
+          r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})',
+        );
+        final match = youtubeRegex.firstMatch(url);
+        if (match != null) {
+          embedUrl =
+              'https://www.youtube.com/embed/${match.group(1)}?autoplay=0&rel=0&modestbranding=1';
+        }
+      }
+    }
+
+    return embedUrl;
+  }
 
   @override
   void initState() {
@@ -33,23 +62,228 @@ class _EmbedPlayerWidgetState extends State<EmbedPlayerWidget> {
     _initializeController();
   }
 
-  Future<void> _initializeController() async {
+  void _initializeController() {
+    final embedUrl = _normalizeEmbedUrl(widget.url);
+    _currentEmbedUrl = embedUrl;
+    debugPrint('[EmbedPlayerWidget] Loading YouTube embed: $embedUrl');
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(Uri.parse(widget.url));
+      ..setUserAgent(
+        'Mozilla/5.0 (Linux; Android 10; SM-A125N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0 Mobile Safari/537.36',
+      )
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (String url) {
+            debugPrint('[EmbedPlayerWidget] Page started loading: $url');
+          },
+          onPageFinished: (String url) {
+            debugPrint('[EmbedPlayerWidget] Page finished loading: $url');
+            // If we just tested connectivity, now load the actual embed URL
+            if (!_connectivityTested && url.contains('example.com')) {
+              _connectivityTested = true;
+              debugPrint(
+                '[EmbedPlayerWidget] Connectivity test OK, now loading embed',
+              );
+              _controller.loadRequest(Uri.parse(embedUrl));
+            }
+          },
+          onWebResourceError: (WebResourceError error) {
+            debugPrint(
+              '[EmbedPlayerWidget] WebResource error: code=${error.errorCode} description=${error.description}',
+            );
+
+            if (_embedFailed) return;
+
+            // If connection refused, try the privacy-enhanced nocookie domain once
+            if (error.errorCode == -6 &&
+                !_triedNoCookie &&
+                _currentEmbedUrl != null) {
+              _triedNoCookie = true;
+              final nocookie = _currentEmbedUrl!.replaceFirst(
+                'www.youtube.com',
+                'www.youtube-nocookie.com',
+              );
+              debugPrint(
+                '[EmbedPlayerWidget] Attempting nocookie URL: $nocookie',
+              );
+              _controller.loadRequest(Uri.parse(nocookie));
+              return;
+            }
+
+            // Fallback: try Chrome Custom Tab on Android, otherwise open externally
+            _embedFailed = true;
+            final toLaunch = _currentEmbedUrl ?? widget.url;
+            Future.microtask(() async {
+              final uri = Uri.parse(toLaunch);
+              try {
+                if (!await launchUrl(
+                  uri,
+                  mode: LaunchMode.externalApplication,
+                )) {
+                  debugPrint(
+                    '[EmbedPlayerWidget] Could not launch external URL: $toLaunch',
+                  );
+                }
+              } catch (e) {
+                if (!await launchUrl(
+                  uri,
+                  mode: LaunchMode.externalApplication,
+                )) {
+                  debugPrint(
+                    '[EmbedPlayerWidget] Could not launch external URL (fallback): $toLaunch',
+                  );
+                }
+              }
+            });
+          },
+          onNavigationRequest: (NavigationRequest request) {
+            debugPrint(
+              '[EmbedPlayerWidget] Navigation request: ${request.url}',
+            );
+            return NavigationDecision.navigate;
+          },
+        ),
+      )
+      // First load a known reachable page to verify WebView network access,
+      // then the onPageFinished handler will load the real embed URL.
+      ..loadRequest(Uri.parse('https://www.example.com'));
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<void>(
-      future: Future.delayed(Duration.zero),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return WebViewWidget(controller: _controller);
-        }
-        return const Center(child: CircularProgressIndicator());
-      },
+    return WebViewWidget(controller: _controller);
+  }
+}
+
+class LazyEmbedWidget extends StatefulWidget {
+  final String url;
+  final String? type;
+  final String? thumbnailUrl;
+
+  const LazyEmbedWidget({
+    super.key,
+    required this.url,
+    this.type,
+    this.thumbnailUrl,
+  });
+
+  @override
+  State<LazyEmbedWidget> createState() => _LazyEmbedWidgetState();
+}
+
+class _LazyEmbedWidgetState extends State<LazyEmbedWidget> {
+  bool _playing = false;
+
+  String? _youtubeId(String url) {
+    final m = RegExp(
+      r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})',
+    ).firstMatch(url);
+    return m?.group(1);
+  }
+
+  Widget _buildThumbnail() {
+    final thumb = widget.type == 'youtube'
+        ? (_youtubeId(widget.url) != null
+              ? 'https://img.youtube.com/vi/${_youtubeId(widget.url)}/hqdefault.jpg'
+              : widget.thumbnailUrl)
+        : widget.thumbnailUrl;
+
+    return Stack(
+      children: [
+        if (thumb != null && thumb.isNotEmpty)
+          SizedBox(
+            height: 220,
+            width: double.infinity,
+            child: CachedNetworkImage(
+              imageUrl: thumb,
+              fit: BoxFit.cover,
+              placeholder: (c, u) => Container(color: Colors.grey[300]),
+              errorWidget: (c, u, e) => Container(color: Colors.grey[300]),
+            ),
+          )
+        else
+          Container(height: 220, color: Colors.grey[300]),
+        Positioned.fill(
+          child: Center(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black45,
+                shape: BoxShape.circle,
+              ),
+              child: const Padding(
+                padding: EdgeInsets.all(12.0),
+                child: Icon(Icons.play_arrow, color: Colors.white, size: 48),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    debugPrint('[LazyEmbedWidget] type=${widget.type}, url=${widget.url}');
+
+    if (_playing) {
+      if (widget.type == 'mp4') {
+        debugPrint('[LazyEmbedWidget] Playing MP4: ${widget.url}');
+        return AspectRatio(
+          aspectRatio: 16 / 9,
+          child: VideoPlayerWidget(url: widget.url),
+        );
+      }
+      if (widget.type == 'youtube') {
+        debugPrint(
+          '[LazyEmbedWidget] YouTube selected (navigation handled on tap)',
+        );
+        return const SizedBox.shrink();
+      }
+      debugPrint('[LazyEmbedWidget] Playing Embed: ${widget.url}');
+      return AspectRatio(
+        aspectRatio: 16 / 9,
+        child: EmbedPlayerWidget(url: widget.url),
+      );
+    }
+
+    return GestureDetector(
+      onTap: () async {
+        debugPrint('[LazyEmbedWidget] Tap to play');
+        if (widget.type == 'youtube') {
+          final video = VideoModel(
+            url: widget.url,
+            thumbnailUrl: widget.thumbnailUrl,
+          );
+          try {
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => VideoPlayerScreen(video: video),
+              ),
+            );
+          } catch (e) {
+            debugPrint(
+              '[LazyEmbedWidget] Navigation failed: $e — falling back to external',
+            );
+            _launchYouTubeExternal(widget.url);
+          }
+        } else {
+          setState(() {
+            _playing = true;
+          });
+        }
+      },
+      child: _buildThumbnail(),
+    );
+  }
+
+  Future<void> _launchYouTubeExternal(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      debugPrint('[LazyEmbedWidget] Failed to launch: $e');
+    }
   }
 }
 
@@ -209,24 +443,14 @@ class _ArticleScreenState extends State<ArticleScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Video or featured image
+            // Video or featured image (lazy embed)
             if (article.videoUrl != null && article.videoUrl!.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Builder(
-                  builder: (context) {
-                    if (article.videoType == 'mp4') {
-                      return AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: VideoPlayerWidget(url: article.videoUrl!),
-                      );
-                    }
-                    // Fallback to WebView for embed links (YouTube/Vimeo)
-                    return SizedBox(
-                      height: 220,
-                      child: EmbedPlayerWidget(url: article.videoUrl!),
-                    );
-                  },
+                child: LazyEmbedWidget(
+                  url: article.videoUrl!,
+                  type: article.videoType,
+                  thumbnailUrl: article.imageUrl,
                 ),
               )
             else if (article.imageUrl != null && article.imageUrl!.isNotEmpty)

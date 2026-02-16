@@ -67,6 +67,7 @@ class Post {
         final iframeMatch = iframeSrc.firstMatch(c);
         if (iframeMatch != null) {
           videoUrl = iframeMatch.group(1);
+          print('[Post.fromJson] Found iframe src: $videoUrl');
         }
 
         // 2) YouTube watch / youtu.be / embed patterns
@@ -77,6 +78,7 @@ class Post {
           final m = youtubeWatch.firstMatch(c);
           if (m != null) {
             videoUrl = 'https://www.youtube.com/embed/${m.group(1)}';
+            print('[Post.fromJson] Found YouTube watch/youtu.be: $videoUrl');
           }
         }
 
@@ -84,35 +86,60 @@ class Post {
         if (videoUrl == null) {
           final embedYt = RegExp(r'youtube\.com\/embed\/([A-Za-z0-9_-]{11})');
           final m2 = embedYt.firstMatch(c);
-          if (m2 != null)
+          if (m2 != null) {
             videoUrl = 'https://www.youtube.com/embed/${m2.group(1)}';
+            print('[Post.fromJson] Found YouTube embed: $videoUrl');
+          }
         }
 
         // 4) Vimeo embed/player patterns
         if (videoUrl == null) {
           final vimeoEmbed = RegExp(r'player\.vimeo\.com\/video\/(\d+)');
           final vm = vimeoEmbed.firstMatch(c);
-          if (vm != null)
+          if (vm != null) {
             videoUrl = 'https://player.vimeo.com/video/${vm.group(1)}';
+            print('[Post.fromJson] Found Vimeo embed: $videoUrl');
+          }
         }
 
         // 5) Vimeo standard links vimeo.com/ID
         if (videoUrl == null) {
           final vimeoStd = RegExp(r'vimeo\.com\/(\d+)');
           final vm2 = vimeoStd.firstMatch(c);
-          if (vm2 != null)
+          if (vm2 != null) {
             videoUrl = 'https://player.vimeo.com/video/${vm2.group(1)}';
+            print('[Post.fromJson] Found Vimeo standard: $videoUrl');
+          }
         }
 
         // 6) Direct mp4 links
         if (videoUrl == null) {
           final mp4 = RegExp(r'''https?:\/\/[^\s"']+\.mp4(\?[^\s"']*)?''');
           final m3 = mp4.firstMatch(c);
-          if (m3 != null) videoUrl = m3.group(0);
+          if (m3 != null) {
+            videoUrl = m3.group(0);
+            print('[Post.fromJson] Found MP4: $videoUrl');
+          }
         }
       }
 
       return videoUrl;
+    }
+
+    final videoUrl = extractVideoUrl(json['content']?.toString(), json['acf']);
+    final videoType = (() {
+      if (videoUrl == null) return null;
+      final low = videoUrl.toLowerCase();
+      if (low.contains('.mp4')) return 'mp4';
+      if (low.contains('youtube') || low.contains('youtu.be')) return 'youtube';
+      if (low.contains('vimeo')) return 'vimeo';
+      return 'embed';
+    })();
+
+    if (videoUrl != null) {
+      print(
+        '[Post.fromJson] Post ${json['slug'] ?? json['id']}: videoUrl=$videoUrl, videoType=$videoType',
+      );
     }
 
     return Post(
@@ -126,17 +153,8 @@ class Post {
       imageAlt: json['featuredImage']?['node']?['altText'],
       authorName: json['author']?['node']?['name'],
       categories: extractCategories(json['categories']?['edges']),
-      videoUrl: extractVideoUrl(json['content']?.toString(), json['acf']),
-      videoType: (() {
-        final v = extractVideoUrl(json['content']?.toString(), json['acf']);
-        if (v == null) return null;
-        final low = v.toLowerCase();
-        if (low.contains('.mp4')) return 'mp4';
-        if (low.contains('youtube') || low.contains('youtu.be'))
-          return 'youtube';
-        if (low.contains('vimeo')) return 'vimeo';
-        return 'embed';
-      })(),
+      videoUrl: videoUrl,
+      videoType: videoType,
     );
   }
 
