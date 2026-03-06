@@ -9,7 +9,9 @@ class PodcastsListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final api = Provider.of<ApiService>(context);
-    final posts = api.posts; // Assuming podcasts are represented as posts
+    final posts = api.posts
+        .where((post) => post.categories?.any((cat) => cat.toLowerCase().contains('podcast')) ?? false)
+        .toList(); // Assuming podcasts are represented as posts
 
     return Scaffold(
       appBar: AppBar(title: const Text('Podcasts')),

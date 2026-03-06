@@ -17,6 +17,9 @@ class HiveCategory {
   final String? description;
 
   // @HiveField(4)
+  final int? count;
+
+  // @HiveField(5)
   final DateTime cachedAt;
 
   HiveCategory({
@@ -24,6 +27,7 @@ class HiveCategory {
     required this.name,
     this.slug,
     this.description,
+    this.count,
     required this.cachedAt,
   });
 
@@ -34,6 +38,7 @@ class HiveCategory {
       name: category.name ?? 'Sans nom',
       slug: category.slug,
       description: category.description,
+      count: category.count is int ? category.count as int : null,
       cachedAt: DateTime.now(),
     );
   }
@@ -45,6 +50,7 @@ class HiveCategory {
       'name': name,
       'slug': slug,
       'description': description,
+      'count': count,
       'cachedAt': cachedAt.toIso8601String(),
     };
   }
@@ -56,6 +62,7 @@ class HiveCategory {
       name: json['name'] as String? ?? 'Sans nom',
       slug: json['slug'] as String?,
       description: json['description'] as String?,
+      count: json['count'] is int ? json['count'] as int : null,
       cachedAt: json['cachedAt'] != null
           ? DateTime.parse(json['cachedAt'] as String)
           : DateTime.now(),

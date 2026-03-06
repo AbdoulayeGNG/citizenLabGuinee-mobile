@@ -295,6 +295,7 @@ String getAllCategoriesQuery() {
             name
             slug
             description
+            count
           }
         }
       }

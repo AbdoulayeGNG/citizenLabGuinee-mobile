@@ -53,7 +53,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
     Widget body;
     if (video.isYouTube) {
-      // Use youtube_player_iframe for in-app playback; if device blocks it user can open externally
+      // Use youtube_player_flutter for in-app playback; if device blocks it user can open externally
       body = YoutubeVideoWidget(url: video.url, title: video.title);
     } else if (video.isNetworkVideo) {
       body = NetworkVideoWidget(url: video.url, title: video.title);

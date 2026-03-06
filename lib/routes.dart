@@ -12,6 +12,7 @@ import 'screens/projects_page.dart';
 import 'screens/about_screen.dart';
 import 'screens/news_list_screen.dart';
 import 'screens/podcasts_list_screen.dart';
+import 'features/community/screens/community_screen.dart';
 
 class AppRoutes {
   static const String home = '/';
@@ -80,7 +81,7 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const EventsScreen());
 
       case community:
-        return MaterialPageRoute(builder: (_) => const TeamScreen());
+        return MaterialPageRoute(builder: (_) => const CommunityScreen());
 
       case documents:
         return MaterialPageRoute(builder: (_) => const DocumentsScreen());

@@ -4,12 +4,14 @@ class Category {
   final String name;
   final String slug;
   final String? description;
+  final int? count; // number of posts in this category (may be null)
 
   Category({
     required this.id,
     required this.name,
     required this.slug,
     this.description,
+    this.count,
   });
 
   factory Category.fromJson(Map<String, dynamic> json) {
@@ -18,6 +20,7 @@ class Category {
       name: json['name'] ?? '',
       slug: json['slug'] ?? '',
       description: json['description'],
+      count: json['count'] is int ? json['count'] as int : null,
     );
   }
 

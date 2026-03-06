@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:youtube_player_iframe/youtube_player_iframe.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:async';
 
 class YoutubeVideoWidget extends StatefulWidget {
   final String url;
@@ -13,11 +14,14 @@ class YoutubeVideoWidget extends StatefulWidget {
 }
 
 class _YoutubeVideoWidgetState extends State<YoutubeVideoWidget> {
-  late final YoutubePlayerController _controller;
-  bool _isReady = false;
+  late YoutubePlayerController _controller;
   bool _hasError = false;
+  Timer? _timeoutTimer;
+  bool _launchedExternal = false;
+  bool _showReplay = false;
 
   String? _extractId(String url) {
+    // supports watch?v=, youtu.be, embed/ and strips query params
     try {
       final uri = Uri.parse(url);
       if (uri.host.contains('youtu.be')) {
@@ -33,68 +37,71 @@ class _YoutubeVideoWidgetState extends State<YoutubeVideoWidget> {
     return null;
   }
 
-  bool _launchedExternal = false;
   @override
   void initState() {
     super.initState();
-    final id = _extractId(widget.url);
-    _controller = YoutubePlayerController.fromVideoId(
-      videoId: id ?? widget.url,
-      params: const YoutubePlayerParams(
-        showControls: true,
-        showFullscreenButton: true,
+    final id = _extractId(widget.url) ?? YoutubePlayer.convertUrlToId(widget.url) ?? '';
+    _controller = YoutubePlayerController(
+      initialVideoId: id,
+      flags: const YoutubePlayerFlags(
+        autoPlay: true,
+        mute: false,
+        disableDragSeek: false,
+        loop: false,
+        forceHD: false,
+        enableCaption: true,
+        showLiveFullscreenButton: true,
+        controlsVisibleAtStart: false,
       ),
-    );
-    _controller.listen((value) {
-      if (!mounted) return;
-      if (value.hasError) {
-        if (!_hasError) {
-          setState(() => _hasError = true);
-          // automatic fallback: open externally when embedding fails
-          if (!_launchedExternal) {
-            _launchedExternal = true;
-            Future.delayed(const Duration(milliseconds: 600), () async {
-              // Prefer opening in YouTube app using video id, then fallback to watch URL, then embed URL
-              String? id;
-              try {
-                final u = Uri.parse(widget.url);
-                if (u.host.contains('youtu')) {
-                  final m = RegExp(
-                    r'([A-Za-z0-9_-]{11})',
-                  ).firstMatch(u.path + (u.query.isNotEmpty ? u.query : ''));
-                  id = m?.group(1);
-                }
-              } catch (_) {}
+    )..addListener(_listener);
 
-              final candidates = <Uri>[];
-              if (id != null) {
-                candidates.add(Uri.parse('vnd.youtube:$id'));
-                candidates.add(
-                  Uri.parse('https://www.youtube.com/watch?v=$id'),
-                );
-              }
-              candidates.add(Uri.parse(widget.url));
-
-              for (final uri in candidates) {
-                try {
-                  if (await launchUrl(
-                    uri,
-                    mode: LaunchMode.externalApplication,
-                  ))
-                    return;
-                } catch (_) {}
-              }
-            });
-          }
-        }
+    // Timeout after 15 seconds if not ready
+    _timeoutTimer = Timer(const Duration(seconds: 15), () {
+      if (!_controller.value.isReady && !_launchedExternal) {
+        _launchedExternal = true;
+        _openExternal();
       }
-      if (!_isReady) setState(() => _isReady = true);
     });
+  }
+
+  void _listener() {
+    if (_controller.value.isReady && _timeoutTimer != null) {
+      _timeoutTimer!.cancel();
+      _timeoutTimer = null;
+    }
+    if (_controller.value.hasError && !_hasError) {
+      setState(() => _hasError = true);
+      if (!_launchedExternal) {
+        _launchedExternal = true;
+        _timeoutTimer?.cancel();
+        _timeoutTimer = null;
+        Future.delayed(const Duration(milliseconds: 600), () async {
+          await _openExternal();
+        });
+      }
+    }
+    // Show replay button when video ends
+    if (_controller.value.playerState == PlayerState.ended && !_showReplay) {
+      setState(() => _showReplay = true);
+    }
+    // Hide replay button when playing
+    if (_controller.value.playerState == PlayerState.playing && _showReplay) {
+      setState(() => _showReplay = false);
+    }
+  }
+
+  Future<void> _openExternal() async {
+    final uri = Uri.parse(widget.url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      // nothing
+    }
   }
 
   @override
   void dispose() {
-    _controller.close();
+    _timeoutTimer?.cancel();
+    _controller.removeListener(_listener);
+    _controller.dispose();
     super.dispose();
   }
 
@@ -103,43 +110,33 @@ class _YoutubeVideoWidgetState extends State<YoutubeVideoWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        YoutubePlayerControllerProvider(
-          controller: _controller,
-          child: AspectRatio(
-            aspectRatio: 16 / 9,
-            child: Stack(
-              children: [
-                YoutubePlayer(controller: _controller),
-                if (_hasError)
-                  Positioned.fill(
-                    child: Container(
-                      color: Colors.black54,
-                      child: Center(
-                        child: ElevatedButton.icon(
-                          icon: const Icon(Icons.open_in_new),
-                          label: const Text('Ouvrir sur YouTube'),
-                          onPressed: () async {
-                            final uri = Uri.parse(widget.url);
-                            if (!await launchUrl(
-                              uri,
-                              mode: LaunchMode.externalApplication,
-                            )) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Impossible d\'ouvrir la vidéo en externe.',
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            YoutubePlayer(
+              controller: _controller,
+              showVideoProgressIndicator: false,
+              progressIndicatorColor: Colors.redAccent,
+              bottomActions: [
+                CurrentPosition(),
+                ProgressBar(isExpanded: true),
+                RemainingDuration(),
+                FullScreenButton(),
               ],
             ),
-          ),
+            if (_showReplay)
+              Container(
+                color: Colors.black54,
+                child: IconButton(
+                  iconSize: 64,
+                  icon: const Icon(Icons.replay, color: Colors.white),
+                  onPressed: () {
+                    _controller.seekTo(const Duration(seconds: 0));
+                    _controller.play();
+                  },
+                ),
+              ),
+          ],
         ),
         if (widget.title != null)
           Padding(

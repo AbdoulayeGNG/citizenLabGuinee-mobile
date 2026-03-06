@@ -35,7 +35,7 @@ class Post {
         return (categoriesData)
             .map(
               (cat) =>
-                  cat is Map ? cat['name']?.toString() ?? '' : cat.toString(),
+                  cat is Map ? ((cat['node'] as Map)['name'] as String?) ?? '' : cat.toString(),
             )
             .where((name) => name.isNotEmpty)
             .toList();
@@ -126,7 +126,12 @@ class Post {
       return videoUrl;
     }
 
-    final videoUrl = extractVideoUrl(json['content']?.toString(), json['acf']);
+    String? videoUrl = extractVideoUrl(json['content']?.toString(), json['acf']);
+    // strip common nuisance query parameters that break players
+    if (videoUrl != null && videoUrl.contains('youtube.com')) {
+      // remove ?feature=oembed or any other query params after the id/embed
+      videoUrl = videoUrl.split('?').first;
+    }
     final videoType = (() {
       if (videoUrl == null) return null;
       final low = videoUrl.toLowerCase();
@@ -142,6 +147,8 @@ class Post {
       );
     }
 
+    final categories = extractCategories(json['categories']?['edges']);
+
     return Post(
       id: json['id'] ?? '',
       title: json['title'] ?? '',
@@ -152,7 +159,7 @@ class Post {
       imageUrl: json['featuredImage']?['node']?['sourceUrl'],
       imageAlt: json['featuredImage']?['node']?['altText'],
       authorName: json['author']?['node']?['name'],
-      categories: extractCategories(json['categories']?['edges']),
+      categories: categories,
       videoUrl: videoUrl,
       videoType: videoType,
     );

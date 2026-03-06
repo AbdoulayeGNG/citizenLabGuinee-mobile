@@ -176,6 +176,13 @@ class ApiService extends ChangeNotifier {
               ),
             )
             .toList();
+        // keep sorted as well (respect count if available)
+        _categories.sort((a, b) {
+          final ac = a.count ?? 0;
+          final bc = b.count ?? 0;
+          if (ac != bc) return bc.compareTo(ac);
+          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+        });
         debugPrint(
           'ApiService._loadCachedData(): loaded ${_categories.length} categories from Hive',
         );
@@ -331,6 +338,13 @@ class ApiService extends ChangeNotifier {
       _categories = categoriesData
           .map((json) => Category.fromJson(Map<String, dynamic>.from(json)))
           .toList();
+      // sort by popularity (count) if available, otherwise alphabetically
+      _categories.sort((a, b) {
+        final ac = a.count ?? 0;
+        final bc = b.count ?? 0;
+        if (ac != bc) return bc.compareTo(ac); // descending count
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
 
       // Save to Hive only
       await _categoriesRepo.saveCategories(_categories);

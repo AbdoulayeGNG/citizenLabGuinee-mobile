@@ -9,7 +9,9 @@ class NewsListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final api = Provider.of<ApiService>(context);
-    final posts = api.posts;
+    final posts = api.posts
+        .where((post) => post.categories?.any((cat) => cat.toLowerCase().contains('actualit')) ?? false)
+        .toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Actualités')),

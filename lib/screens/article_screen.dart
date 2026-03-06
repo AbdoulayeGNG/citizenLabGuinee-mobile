@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/post.dart';
 import '../features/media/models/video_model.dart';
 import '../features/media/widgets/video_player_screen.dart';
+import '../features/media/widgets/youtube_video_widget.dart';
 import '../services/api_service.dart';
 import '../widgets/post_card.dart';
 
@@ -235,10 +236,8 @@ class _LazyEmbedWidgetState extends State<LazyEmbedWidget> {
         );
       }
       if (widget.type == 'youtube') {
-        debugPrint(
-          '[LazyEmbedWidget] YouTube selected (navigation handled on tap)',
-        );
-        return const SizedBox.shrink();
+        debugPrint('[LazyEmbedWidget] Playing YouTube inline: ${widget.url}');
+        return YoutubeVideoWidget(url: widget.url);
       }
       debugPrint('[LazyEmbedWidget] Playing Embed: ${widget.url}');
       return AspectRatio(
@@ -251,22 +250,9 @@ class _LazyEmbedWidgetState extends State<LazyEmbedWidget> {
       onTap: () async {
         debugPrint('[LazyEmbedWidget] Tap to play');
         if (widget.type == 'youtube') {
-          final video = VideoModel(
-            url: widget.url,
-            thumbnailUrl: widget.thumbnailUrl,
-          );
-          try {
-            await Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => VideoPlayerScreen(video: video),
-              ),
-            );
-          } catch (e) {
-            debugPrint(
-              '[LazyEmbedWidget] Navigation failed: $e — falling back to external',
-            );
-            _launchYouTubeExternal(widget.url);
-          }
+          setState(() {
+            _playing = true;
+          });
         } else {
           setState(() {
             _playing = true;
