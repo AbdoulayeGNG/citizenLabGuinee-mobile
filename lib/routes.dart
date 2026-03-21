@@ -13,6 +13,7 @@ import 'screens/about_screen.dart';
 import 'screens/news_list_screen.dart';
 import 'screens/podcasts_list_screen.dart';
 import 'features/community/screens/community_screen.dart';
+import 'models/post.dart';
 
 class AppRoutes {
   static const String home = '/';
@@ -36,9 +37,19 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const HomeScreen());
 
       case article:
-        final args = settings.arguments as Map<String, dynamic>?;
-        final articleId = args?['id'] as String?;
-        if (articleId == null) {
+        final args = settings.arguments;
+        String? articleId;
+        
+        // Handle Post object
+        if (args is Post) {
+          articleId = args.slug;
+        }
+        // Handle Map with id or slug
+        else if (args is Map<String, dynamic>) {
+          articleId = (args['id'] ?? args['slug']) as String?;
+        }
+        
+        if (articleId == null || articleId.isEmpty) {
           return MaterialPageRoute(
             builder: (_) => Scaffold(
               appBar: AppBar(title: const Text('Erreur')),
@@ -47,7 +58,7 @@ class AppRoutes {
           );
         }
         return MaterialPageRoute(
-          builder: (_) => ArticleScreen(articleId: articleId),
+          builder: (_) => ArticleScreen(articleId: articleId ?? ''),
         );
 
       case category:

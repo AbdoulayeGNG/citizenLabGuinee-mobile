@@ -44,6 +44,15 @@ class NewsBanner extends StatelessWidget {
               ),
             ),
           ),
+          // Back button
+          Positioned(
+            top: 40,
+            left: 16,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+              onPressed: () => Navigator.pushReplacementNamed(context, '/'),
+            ),
+          ),
           // Text content
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
