@@ -6,9 +6,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/post.dart';
-import '../features/media/models/video_model.dart';
-import '../features/media/widgets/video_player_screen.dart';
-import '../features/media/widgets/youtube_video_widget.dart';
+import '../models/video_model.dart';
+import '../widgets/video_player_screen.dart';
+import '../widgets/youtube_video_widget.dart';
 import '../services/api_service.dart';
 import '../widgets/post_card.dart';
 

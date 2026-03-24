@@ -25,10 +25,13 @@ class NewsBanner extends StatelessWidget {
         children: [
           // Background image
           CachedNetworkImage(
-            imageUrl: 'https://example.com/civic-engagement-banner.jpg', // Replace with actual image URL
+            imageUrl:
+                'https://example.com/civic-engagement-banner.jpg', // Replace with actual image URL
             fit: BoxFit.cover,
-            placeholder: (context, url) => Container(color: const Color(0xFF009460)),
-            errorWidget: (context, url, error) => Container(color: const Color(0xFF009460)),
+            placeholder: (context, url) =>
+                Container(color: const Color(0xFF009460)),
+            errorWidget: (context, url, error) =>
+                Container(color: const Color(0xFF009460)),
           ),
           // Gradient overlay with Guinea flag colors
           Container(
@@ -55,7 +58,10 @@ class NewsBanner extends StatelessWidget {
           ),
           // Text content
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 40.0,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,9 +103,7 @@ class NewsCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
@@ -118,7 +122,9 @@ class NewsCard extends StatelessWidget {
               Hero(
                 tag: 'news-image-${post.id}',
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
                   child: AspectRatio(
                     aspectRatio: 16 / 9,
                     child: CachedNetworkImage(
@@ -172,9 +178,9 @@ class NewsCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     dateFormat.format(DateTime.parse(post.date)),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -200,7 +206,8 @@ class NewsListScreen extends StatefulWidget {
   State<NewsListScreen> createState() => _NewsListScreenState();
 }
 
-class _NewsListScreenState extends State<NewsListScreen> with TickerProviderStateMixin {
+class _NewsListScreenState extends State<NewsListScreen>
+    with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -227,7 +234,13 @@ class _NewsListScreenState extends State<NewsListScreen> with TickerProviderStat
   Widget build(BuildContext context) {
     // Assuming posts are provided via Provider or similar
     final posts = Provider.of<ApiService>(context).posts
-        .where((post) => post.categories?.any((cat) => cat.toLowerCase().contains('actualit')) ?? false)
+        .where(
+          (post) =>
+              post.categories?.any(
+                (cat) => cat.toLowerCase().contains('actualit'),
+              ) ??
+              false,
+        )
         .toList();
 
     return Scaffold(
@@ -235,19 +248,14 @@ class _NewsListScreenState extends State<NewsListScreen> with TickerProviderStat
         opacity: _fadeAnimation,
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: const NewsBanner(),
-            ),
+            SliverToBoxAdapter(child: const NewsBanner()),
             SliverPadding(
               padding: const EdgeInsets.only(top: 16.0),
               sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final post = posts[index];
-                    return NewsCard(post: post);
-                  },
-                  childCount: posts.length,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final post = posts[index];
+                  return NewsCard(post: post);
+                }, childCount: posts.length),
               ),
             ),
           ],

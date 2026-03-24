@@ -49,6 +49,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'CitizenLab Guinée',
         theme: AppTheme.lightTheme,
+        debugShowCheckedModeBanner: false,
         home: const HomeScreen(),
         onGenerateRoute: AppRoutes.generateRoute,
       ),

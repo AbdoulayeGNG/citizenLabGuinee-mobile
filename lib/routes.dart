@@ -3,7 +3,6 @@ import 'screens/home_screen.dart';
 import 'screens/article_screen.dart';
 import 'screens/category_screen.dart';
 import 'screens/categories_screen.dart';
-import 'screens/team_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/events_screen.dart';
 import 'screens/documents_screen.dart';
@@ -12,7 +11,7 @@ import 'screens/projects_page.dart';
 import 'screens/about_screen.dart';
 import 'screens/news_list_screen.dart';
 import 'screens/podcasts_list_screen.dart';
-import 'features/community/screens/community_screen.dart';
+import 'screens/community_screen.dart';
 import 'models/post.dart';
 
 class AppRoutes {
@@ -39,7 +38,7 @@ class AppRoutes {
       case article:
         final args = settings.arguments;
         String? articleId;
-        
+
         // Handle Post object
         if (args is Post) {
           articleId = args.slug;
@@ -48,7 +47,7 @@ class AppRoutes {
         else if (args is Map<String, dynamic>) {
           articleId = (args['id'] ?? args['slug']) as String?;
         }
-        
+
         if (articleId == null || articleId.isEmpty) {
           return MaterialPageRoute(
             builder: (_) => Scaffold(
@@ -78,9 +77,6 @@ class AppRoutes {
 
       case categories:
         return MaterialPageRoute(builder: (_) => const CategoriesScreen());
-
-      case team:
-        return MaterialPageRoute(builder: (_) => const TeamScreen());
 
       case search:
         return MaterialPageRoute(builder: (_) => const SearchScreen());

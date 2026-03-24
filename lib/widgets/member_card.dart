@@ -2,17 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../../models/team_member.dart';
+import '../models/team_member.dart';
 
 class MemberCard extends StatelessWidget {
   final TeamMember member;
   final VoidCallback? onTap;
 
-  const MemberCard({
-    Key? key,
-    required this.member,
-    this.onTap,
-  }) : super(key: key);
+  const MemberCard({Key? key, required this.member, this.onTap})
+    : super(key: key);
 
   /// Décoder les entités HTML dans l'URL
   String _decodeHtmlEntities(String url) {
@@ -27,15 +24,15 @@ class MemberCard extends StatelessWidget {
   /// Formater et valider l'URL avant de l'ouvrir
   String? _formatUrl(String? url) {
     if (url == null || url.isEmpty) return null;
-    
+
     // Décoder les entités HTML
     var decoded = _decodeHtmlEntities(url);
-    
+
     // Si l'URL commence déjà par http ou https, la retourner
     if (decoded.startsWith('http://') || decoded.startsWith('https://')) {
       return decoded;
     }
-    
+
     // Sinon, ajouter https://
     return 'https://$decoded';
   }
@@ -50,26 +47,28 @@ class MemberCard extends StatelessWidget {
     try {
       final uri = Uri.parse(formattedUrl);
       debugPrint('🔗 Tentative d\'ouverture: $formattedUrl');
-      
+
       // Essayer différents modes
       bool launched = false;
-      
+
       // Mode 1 : Application externe (navigateur)
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
         launched = true;
         debugPrint('✅ Ouvert en application externe');
       }
-      
+
       // Mode 2 : Si le mode 1 échoue, essayer le mode par défaut
       if (!launched && await canLaunchUrl(uri)) {
         await launchUrl(uri);
         launched = true;
         debugPrint('✅ Ouvert en mode par défaut');
       }
-      
+
       if (!launched) {
-        debugPrint('⚠️ Impossible d\'ouvrir, affichage fallback: $formattedUrl');
+        debugPrint(
+          '⚠️ Impossible d\'ouvrir, affichage fallback: $formattedUrl',
+        );
         _showUrlFallback(context, formattedUrl);
       }
     } catch (e) {
@@ -123,9 +122,7 @@ class MemberCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
@@ -203,7 +200,9 @@ class MemberCard extends StatelessWidget {
       (member.instagram, FontAwesomeIcons.instagram, 'Instagram'),
     ];
 
-    final activeLinks = socialLinks.where((link) => link.$1 != null && link.$1!.isNotEmpty).toList();
+    final activeLinks = socialLinks
+        .where((link) => link.$1 != null && link.$1!.isNotEmpty)
+        .toList();
 
     if (activeLinks.isEmpty) {
       return const SizedBox.shrink();

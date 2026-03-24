@@ -21,8 +21,17 @@ class HomeScreen extends StatelessWidget {
             onPressed: () => Navigator.pushNamed(context, '/search'),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: apiService.refreshData,
+            icon: apiService.isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(Icons.refresh),
+            onPressed: apiService.isLoading ? null : apiService.refreshData,
           ),
           if (apiService.isOffline)
             const Padding(
@@ -93,11 +102,7 @@ class _HeroSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Icône
-          Icon(
-            Icons.public,
-            size: 36,
-            color: Colors.white.withOpacity(0.9),
-          ),
+          Icon(Icons.public, size: 36, color: Colors.white.withOpacity(0.9)),
           const SizedBox(height: 12),
           // Titre principal
           Text(
@@ -287,7 +292,13 @@ class _NewsPreviewSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final newsList = apiService.posts
-        .where((post) => post.categories?.any((cat) => cat.toLowerCase().contains('actualit')) ?? false)
+        .where(
+          (post) =>
+              post.categories?.any(
+                (cat) => cat.toLowerCase().contains('actualit'),
+              ) ??
+              false,
+        )
         .take(3)
         .toList();
 
@@ -324,7 +335,9 @@ class _NewsPreviewSection extends StatelessWidget {
               itemBuilder: (context, index) {
                 final post = newsList[index];
                 return Padding(
-                  padding: EdgeInsets.only(right: index == newsList.length - 1 ? 0 : 12),
+                  padding: EdgeInsets.only(
+                    right: index == newsList.length - 1 ? 0 : 12,
+                  ),
                   child: PostCard(
                     post: post,
                     onTap: () => Navigator.pushNamed(
@@ -354,7 +367,13 @@ class _PodcastPreviewSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final podcastList = apiService.posts
-        .where((post) => post.categories?.any((cat) => cat.toLowerCase().contains('podcast')) ?? false)
+        .where(
+          (post) =>
+              post.categories?.any(
+                (cat) => cat.toLowerCase().contains('podcast'),
+              ) ??
+              false,
+        )
         .take(3)
         .toList();
 
@@ -391,7 +410,9 @@ class _PodcastPreviewSection extends StatelessWidget {
               itemBuilder: (context, index) {
                 final post = podcastList[index];
                 return Padding(
-                  padding: EdgeInsets.only(right: index == podcastList.length - 1 ? 0 : 12),
+                  padding: EdgeInsets.only(
+                    right: index == podcastList.length - 1 ? 0 : 12,
+                  ),
                   child: PostCard(
                     post: post,
                     onTap: () => Navigator.pushNamed(
@@ -439,11 +460,7 @@ class _QuickAccessCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 20,
-                color: Theme.of(context).primaryColor,
-              ),
+              Icon(icon, size: 20, color: Theme.of(context).primaryColor),
               const SizedBox(height: 8),
               Text(
                 title,
@@ -480,14 +497,58 @@ class _CompactProjectCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            // Image compacte
+            // Image compacte avec fallback
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                project.imageUrl,
+              child: SizedBox(
                 width: 60,
                 height: 60,
-                fit: BoxFit.cover,
+                child: (project.imageUrl.isNotEmpty)
+                    ? Image.network(
+                        project.imageUrl,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 60,
+                            height: 60,
+                            color: Colors.grey.shade300,
+                            child: const Icon(
+                              Icons.broken_image,
+                              color: Colors.grey,
+                              size: 28,
+                            ),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            width: 60,
+                            height: 60,
+                            color: Colors.grey.shade200,
+                            child: const Center(
+                              child: SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : Container(
+                        width: 60,
+                        height: 60,
+                        color: Colors.grey.shade300,
+                        child: const Icon(
+                          Icons.image_not_supported,
+                          color: Colors.white70,
+                          size: 28,
+                        ),
+                      ),
               ),
             ),
             const SizedBox(width: 12),
@@ -509,20 +570,13 @@ class _CompactProjectCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     project.category,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
               ),
             ),
             // Chevron
-            Icon(
-              Icons.chevron_right,
-              size: 20,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.chevron_right, size: 20, color: Colors.grey[400]),
           ],
         ),
       ),

@@ -40,7 +40,10 @@ class _YoutubeVideoWidgetState extends State<YoutubeVideoWidget> {
   @override
   void initState() {
     super.initState();
-    final id = _extractId(widget.url) ?? YoutubePlayer.convertUrlToId(widget.url) ?? '';
+    final id =
+        _extractId(widget.url) ??
+        YoutubePlayer.convertUrlToId(widget.url) ??
+        '';
     _controller = YoutubePlayerController(
       initialVideoId: id,
       flags: const YoutubePlayerFlags(

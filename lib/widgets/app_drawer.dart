@@ -19,20 +19,20 @@ class AppDrawer extends StatelessWidget {
           _buildSection('Navigation', [
             _buildMenuItem(context, 'Accueil', Icons.home, '/'),
             _buildMenuItem(context, 'Actualités', Icons.newspaper, '/news'),
-            _buildMenuItem(
+            /*_buildMenuItem(
               context,
               'Catégories',
               Icons.category,
               '/categories',
-            ),
-            _buildMenuItem(context, 'Équipe', Icons.people, '/team'),
-            _buildMenuItem(context, 'Recherche', Icons.search, '/search'),
+            ),*/
+            _buildMenuItem(context, 'Équipe', Icons.people, '/community'),
+            //_buildMenuItem(context, 'Recherche', Icons.search, '/search'),
           ]),
           const Divider(),
           _buildSection('À propos', [
             _buildMenuItem(context, 'Qui sommes-nous', Icons.info, '/about'),
           ]),
-          const Divider(),
+          /*const Divider(),
           _buildSection('Debug', [
             _buildMenuItem(
               context,
@@ -40,9 +40,9 @@ class AppDrawer extends StatelessWidget {
               Icons.wifi_off,
               '/offline-test',
             ),
-          ]),
-          const Divider(),
-          _buildMenuItem(context, 'Réglages', Icons.settings, null),
+          ]),*/
+         // const Divider(),
+         // _buildMenuItem(context, 'Réglages', Icons.settings, null),
         ],
       ),
     );

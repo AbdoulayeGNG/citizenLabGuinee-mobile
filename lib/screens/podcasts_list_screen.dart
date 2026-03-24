@@ -23,8 +23,10 @@ class PodcastBanner extends StatelessWidget {
           CachedNetworkImage(
             imageUrl: 'https://example.com/podcast-banner.jpg',
             fit: BoxFit.cover,
-            placeholder: (context, url) => Container(color: const Color(0xFF009460)),
-            errorWidget: (context, url, error) => Container(color: const Color(0xFF009460)),
+            placeholder: (context, url) =>
+                Container(color: const Color(0xFF009460)),
+            errorWidget: (context, url, error) =>
+                Container(color: const Color(0xFF009460)),
           ),
           // Gradient overlay with Guinea flag colors
           Container(
@@ -51,7 +53,10 @@ class PodcastBanner extends StatelessWidget {
           ),
           // Text content
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 40.0,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,17 +104,11 @@ class PodcastCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          Navigator.pushNamed(
-            context,
-            '/article',
-            arguments: post,
-          );
+          Navigator.pushNamed(context, '/article', arguments: post);
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +118,9 @@ class PodcastCard extends StatelessWidget {
               Hero(
                 tag: 'podcast-image-${post.id}',
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
                   child: AspectRatio(
                     aspectRatio: 16 / 9,
                     child: CachedNetworkImage(
@@ -173,9 +174,9 @@ class PodcastCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     dateFormat.format(DateTime.parse(post.date)),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -201,7 +202,8 @@ class PodcastsListScreen extends StatefulWidget {
   State<PodcastsListScreen> createState() => _PodcastsListScreenState();
 }
 
-class _PodcastsListScreenState extends State<PodcastsListScreen> with TickerProviderStateMixin {
+class _PodcastsListScreenState extends State<PodcastsListScreen>
+    with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -227,7 +229,13 @@ class _PodcastsListScreenState extends State<PodcastsListScreen> with TickerProv
   @override
   Widget build(BuildContext context) {
     final posts = Provider.of<ApiService>(context).posts
-        .where((post) => post.categories?.any((cat) => cat.toLowerCase().contains('podcast')) ?? false)
+        .where(
+          (post) =>
+              post.categories?.any(
+                (cat) => cat.toLowerCase().contains('podcast'),
+              ) ??
+              false,
+        )
         .toList();
 
     return Scaffold(
@@ -235,19 +243,14 @@ class _PodcastsListScreenState extends State<PodcastsListScreen> with TickerProv
         opacity: _fadeAnimation,
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: const PodcastBanner(),
-            ),
+            SliverToBoxAdapter(child: const PodcastBanner()),
             SliverPadding(
               padding: const EdgeInsets.only(top: 16.0),
               sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final post = posts[index];
-                    return PodcastCard(post: post);
-                  },
-                  childCount: posts.length,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final post = posts[index];
+                  return PodcastCard(post: post);
+                }, childCount: posts.length),
               ),
             ),
           ],

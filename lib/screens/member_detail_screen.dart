@@ -2,15 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../../models/team_member.dart';
+import '../models/team_member.dart';
 
 class MemberDetailScreen extends StatelessWidget {
   final TeamMember member;
 
-  const MemberDetailScreen({
-    Key? key,
-    required this.member,
-  }) : super(key: key);
+  const MemberDetailScreen({Key? key, required this.member}) : super(key: key);
 
   /// Décoder les entités HTML dans l'URL
   String _decodeHtmlEntities(String url) {
@@ -25,15 +22,15 @@ class MemberDetailScreen extends StatelessWidget {
   /// Formater et valider l'URL avant de l'ouvrir
   String? _formatUrl(String? url) {
     if (url == null || url.isEmpty) return null;
-    
+
     // Décoder les entités HTML
     var decoded = _decodeHtmlEntities(url);
-    
+
     // Si l'URL commence déjà par http ou https, la retourner
     if (decoded.startsWith('http://') || decoded.startsWith('https://')) {
       return decoded;
     }
-    
+
     // Sinon, ajouter https://
     return 'https://$decoded';
   }
@@ -48,26 +45,28 @@ class MemberDetailScreen extends StatelessWidget {
     try {
       final uri = Uri.parse(formattedUrl);
       debugPrint('🔗 Tentative d\'ouverture: $formattedUrl');
-      
+
       // Essayer différents modes
       bool launched = false;
-      
+
       // Mode 1 : Application externe (navigateur)
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
         launched = true;
         debugPrint('✅ Ouvert en application externe');
       }
-      
+
       // Mode 2 : Si le mode 1 échoue, essayer le mode par défaut
       if (!launched && await canLaunchUrl(uri)) {
         await launchUrl(uri);
         launched = true;
         debugPrint('✅ Ouvert en mode par défaut');
       }
-      
+
       if (!launched) {
-        debugPrint('⚠️ Impossible d\'ouvrir, affichage fallback: $formattedUrl');
+        debugPrint(
+          '⚠️ Impossible d\'ouvrir, affichage fallback: $formattedUrl',
+        );
       }
     } catch (e) {
       debugPrint('❌ Erreur: $e');
@@ -79,10 +78,7 @@ class MemberDetailScreen extends StatelessWidget {
     final hasImage = member.photoUrl != null && member.photoUrl!.isNotEmpty;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Profil'), centerTitle: true),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -104,13 +100,16 @@ class MemberDetailScreen extends StatelessWidget {
                 child: CircleAvatar(
                   radius: 70,
                   backgroundColor: Colors.grey[200],
-                  backgroundImage:
-                      hasImage ? NetworkImage(member.photoUrl!) : null,
+                  backgroundImage: hasImage
+                      ? NetworkImage(member.photoUrl!)
+                      : null,
                   child: !hasImage
                       ? Icon(
                           Icons.person,
                           size: 70,
-                          color: Theme.of(context).primaryColor.withOpacity(0.5),
+                          color: Theme.of(
+                            context,
+                          ).primaryColor.withOpacity(0.5),
                         )
                       : null,
                 ),
@@ -136,7 +135,10 @@ class MemberDetailScreen extends StatelessWidget {
             if (member.role != null && member.role!.isNotEmpty)
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Theme.of(context).primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -154,7 +156,10 @@ class MemberDetailScreen extends StatelessWidget {
             else if (member.team != null && member.team!.isNotEmpty)
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Theme.of(context).primaryColor.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(20),
@@ -162,10 +167,7 @@ class MemberDetailScreen extends StatelessWidget {
                 child: Text(
                   member.team!,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[700],
-                  ),
+                  style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                 ),
               ),
             const SizedBox(height: 24),
@@ -216,7 +218,9 @@ class MemberDetailScreen extends StatelessWidget {
       (member.instagram, FontAwesomeIcons.instagram, 'Instagram'),
     ];
 
-    final activeLinks = socialLinks.where((link) => link.$1 != null && link.$1!.isNotEmpty).toList();
+    final activeLinks = socialLinks
+        .where((link) => link.$1 != null && link.$1!.isNotEmpty)
+        .toList();
 
     if (activeLinks.isEmpty) {
       return const SizedBox.shrink();
@@ -261,11 +265,7 @@ class MemberDetailScreen extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(28),
             onTap: () => _launchURL(url),
-            child: Icon(
-              icon,
-              size: 24,
-              color: Theme.of(context).primaryColor,
-            ),
+            child: Icon(icon, size: 24, color: Theme.of(context).primaryColor),
           ),
         ),
       ),
