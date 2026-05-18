@@ -1,10 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/api_service.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final apiService = Provider.of<ApiService>(context);
+    final videoCategories = apiService.categories.where((category) {
+      final displayName = category.displayName.toLowerCase();
+      final slug = category.slug.toLowerCase();
+      return displayName.contains('video') ||
+          displayName.contains('vidéo') ||
+          slug.contains('video') ||
+          slug.contains('vidéo');
+    }).toList();
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -19,30 +31,37 @@ class AppDrawer extends StatelessWidget {
           _buildSection('Navigation', [
             _buildMenuItem(context, 'Accueil', Icons.home, '/'),
             _buildMenuItem(context, 'Actualités', Icons.newspaper, '/news'),
-            /*_buildMenuItem(
+            _buildMenuItem(context, 'Projets', Icons.work_outline, '/projects'),
+            _buildMenuItem(
               context,
-              'Catégories',
-              Icons.category,
-              '/categories',
-            ),*/
+              'Formations',
+              Icons.school_outlined,
+              '/formations',
+            ),
+            _buildMenuItem(
+              context,
+              'Documents',
+              Icons.description_outlined,
+              '/documents',
+            ),
             _buildMenuItem(context, 'Équipe', Icons.people, '/community'),
-            //_buildMenuItem(context, 'Recherche', Icons.search, '/search'),
           ]),
+          if (videoCategories.isNotEmpty) ...[
+            const Divider(),
+            _buildSection('Catégories', [
+              ...videoCategories.map((category) {
+                return _buildCategoryMenuItem(
+                  context,
+                  category.displayName,
+                  category.slug,
+                );
+              }).toList(),
+            ]),
+          ],
           const Divider(),
           _buildSection('À propos', [
             _buildMenuItem(context, 'Qui sommes-nous', Icons.info, '/about'),
           ]),
-          /*const Divider(),
-          _buildSection('Debug', [
-            _buildMenuItem(
-              context,
-              'Test Mode Offline',
-              Icons.wifi_off,
-              '/offline-test',
-            ),
-          ]),*/
-         // const Divider(),
-         // _buildMenuItem(context, 'Réglages', Icons.settings, null),
         ],
       ),
     );
@@ -80,6 +99,25 @@ class AppDrawer extends StatelessWidget {
         } else if (route == '/') {
           Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
         }
+      },
+    );
+  }
+
+  static ListTile _buildCategoryMenuItem(
+    BuildContext context,
+    String label,
+    String slug,
+  ) {
+    return ListTile(
+      leading: const Icon(Icons.category),
+      title: Text(label),
+      onTap: () {
+        Navigator.pop(context);
+        Navigator.pushNamed(
+          context,
+          '/category',
+          arguments: {'slug': slug, 'name': label},
+        );
       },
     );
   }

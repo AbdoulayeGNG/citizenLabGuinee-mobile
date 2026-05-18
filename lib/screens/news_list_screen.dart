@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'dart:math';
 import 'package:provider/provider.dart';
 import '../models/post.dart';
 import '../services/api_service.dart';
@@ -16,7 +17,7 @@ class NewsBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final bannerHeight = screenHeight * 0.32; // 32% of screen height
+    final bannerHeight = max(screenHeight * 0.32, 280.0); // Safe minimum height
 
     return SizedBox(
       height: bannerHeight,
@@ -143,17 +144,21 @@ class NewsCard extends StatelessWidget {
                 ),
               )
             else
-              Container(
-                height: 180,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFCD116),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.article,
-                    size: 60,
-                    color: Color(0xFFCE1126),
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFCD116),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.article,
+                      size: 60,
+                      color: Color(0xFFCE1126),
+                    ),
                   ),
                 ),
               ),

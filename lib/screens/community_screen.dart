@@ -58,8 +58,8 @@ class CommunityScreen extends StatelessWidget {
                     crossAxisCount: crossAxisCount,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
-                    // Hauteur dynamique pour les cards
-                    childAspectRatio: 0.75,
+                    // Hauteur fixe et adaptée pour un MemberCard (au lieu de s'étirer via aspect ratio)
+                    mainAxisExtent: 200,
                   ),
                   delegate: SliverChildBuilderDelegate((context, index) {
                     return MemberCard(

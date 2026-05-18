@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/post.dart';
+import '../repositories/document_repository.dart';
+import '../screens/document_viewer_screen.dart';
 import '../services/api_service.dart';
+import '../widgets/download_button.dart';
 
 class CategoryScreen extends StatefulWidget {
   final String categorySlug;
@@ -14,6 +18,7 @@ class CategoryScreen extends StatefulWidget {
 
 class _CategoryScreenState extends State<CategoryScreen> {
   late Future<List<Post>> _postsFuture;
+  final DocumentRepository _repo = DocumentRepository();
 
   @override
   void initState() {
@@ -24,12 +29,37 @@ class _CategoryScreenState extends State<CategoryScreen> {
     ).fetchPostsByCategory(widget.categorySlug);
   }
 
+  String _stripHtml(String text) {
+    final regex = RegExp(r'<[^>]*>', multiLine: true, caseSensitive: false);
+    return text.replaceAll(regex, '').trim();
+  }
+
+  Future<void> _openDocument(String id, String title) async {
+    final doc = await _repo.getById(id);
+    if (doc != null &&
+        doc.localPath != null &&
+        File(doc.localPath!).existsSync()) {
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              DocumentViewerScreen(localPath: doc.localPath!, title: title),
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Document non trouvé en local. Téléchargez-le d’abord.'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.categorySlug.replaceAll('-', ' ').toUpperCase()),
-      ),
       body: FutureBuilder<List<Post>>(
         future: _postsFuture,
         builder: (context, snapshot) {
@@ -132,7 +162,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      post.title,
+                                      _stripHtml(post.title),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: Theme.of(context)
@@ -144,7 +174,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      post.excerpt ?? '',
+                                      _stripHtml(post.excerpt ?? ''),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: Theme.of(
@@ -158,6 +188,45 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                         context,
                                       ).textTheme.labelSmall,
                                     ),
+                                    if (post.documentUrl != null) ...[
+                                      const SizedBox(height: 12),
+                                      FutureBuilder<bool>(
+                                        future: _repo.isDownloaded(post.id),
+                                        builder: (context, snapshot) {
+                                          final downloaded =
+                                              snapshot.data == true;
+                                          return Row(
+                                            children: [
+                                              Expanded(
+                                                child: DownloadButton(
+                                                  id: post.id,
+                                                  title: post.title,
+                                                  remoteUrl: post.documentUrl!,
+                                                  onDownloaded: () =>
+                                                      setState(() {}),
+                                                ),
+                                              ),
+                                              if (downloaded)
+                                                const SizedBox(width: 12),
+                                              if (downloaded)
+                                                Expanded(
+                                                  child: OutlinedButton.icon(
+                                                    onPressed: () =>
+                                                        _openDocument(
+                                                          post.id,
+                                                          post.title,
+                                                        ),
+                                                    icon: const Icon(
+                                                      Icons.open_in_new,
+                                                    ),
+                                                    label: const Text('Ouvrir'),
+                                                  ),
+                                                ),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'dart:math';
 import 'package:provider/provider.dart';
 import 'package:html/parser.dart' as html_parser;
 import '../models/post.dart';
@@ -12,7 +13,7 @@ class PodcastBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final bannerHeight = screenHeight * 0.32;
+    final bannerHeight = max(screenHeight * 0.32, 280.0);
 
     return SizedBox(
       height: bannerHeight,
@@ -139,17 +140,21 @@ class PodcastCard extends StatelessWidget {
                 ),
               )
             else
-              Container(
-                height: 180,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFCD116),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.podcasts,
-                    size: 60,
-                    color: Color(0xFFCE1126),
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFCD116),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.podcasts,
+                      size: 60,
+                      color: Color(0xFFCE1126),
+                    ),
                   ),
                 ),
               ),

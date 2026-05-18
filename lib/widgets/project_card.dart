@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../models/project.dart';
 
 class ProjectCard extends StatefulWidget {
-  final Project project;
-  final int index;
+  final ProjectCategory project;
   final VoidCallback onTap;
 
-  const ProjectCard({
-    super.key,
-    required this.project,
-    required this.index,
-    required this.onTap,
-  });
+  const ProjectCard({super.key, required this.project, required this.onTap});
 
   @override
   State<ProjectCard> createState() => _ProjectCardState();
@@ -21,21 +14,18 @@ class ProjectCard extends StatefulWidget {
 class _ProjectCardState extends State<ProjectCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.02).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-
-    _animationController.forward();
   }
 
   @override
@@ -44,179 +34,177 @@ class _ProjectCardState extends State<ProjectCard>
     super.dispose();
   }
 
+  Color _getColorFromHex(String hexColor) {
+    hexColor = hexColor.replaceFirst('#', '');
+    return Color(int.parse('FF$hexColor', radix: 16));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isEven = widget.index % 2 == 0;
+    final colorAccent = _getColorFromHex(widget.project.color);
 
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+    return MouseRegion(
+      onEnter: (_) => _animationController.forward(),
+      onExit: (_) => _animationController.reverse(),
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: GestureDetector(
+          onTap: widget.onTap,
           child: Card(
-            elevation: 8,
-            shadowColor: Colors.black.withOpacity(0.15),
+            elevation: 4,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: colorAccent.withOpacity(0.3), width: 1),
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Column(
-                children: [
-                  // Image
-                  SizedBox(
-                    height: 220,
-                    child: Stack(
-                      fit: StackFit.expand,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.white, colorAccent.withOpacity(0.05)],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Icon and color bar
+                    Row(
                       children: [
-                        CachedNetworkImage(
-                          imageUrl: widget.project.imageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: Colors.grey[300],
-                            child: const Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            color: Colors.grey[300],
-                            child: const Icon(
-                              Icons.image_not_supported_outlined,
-                              size: 48,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-                        // Dark gradient overlay
                         Container(
+                          width: 60,
+                          height: 60,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withOpacity(0.4),
-                              ],
+                            color: colorAccent.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: colorAccent.withOpacity(0.3),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              widget.project.icon,
+                              style: const TextStyle(fontSize: 32),
                             ),
                           ),
                         ),
-                        // Category badge (top-left)
-                        Positioned(
-                          top: 16,
-                          left: 16,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFCE1126), // Red
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              widget.project.category,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: colorAccent,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 8),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  // Content
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title
-                        Text(
-                          widget.project.title,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFF009460), // Green
-                              ),
-                        ),
-                        const SizedBox(height: 12),
-                        // Description
-                        Text(
-                          widget.project.description,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: Colors.grey[700], height: 1.5),
-                        ),
-                        const SizedBox(height: 16),
-                        // Status & Button Row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Status chip
-                            Container(
+                    const SizedBox(height: 16),
+                    // Title
+                    Text(
+                      widget.project.title,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 12),
+                    // Description
+                    Text(
+                      widget.project.description,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.black54,
+                        height: 1.5,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 16),
+                    // Themes preview
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: widget.project.themes
+                          .take(2)
+                          .map(
+                            (theme) => Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
+                                horizontal: 8,
+                                vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: _getStatusColor(
-                                  widget.project.status,
-                                ).withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(20),
+                                color: colorAccent.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(6),
                                 border: Border.all(
-                                  color: _getStatusColor(widget.project.status),
-                                  width: 1,
+                                  color: colorAccent.withOpacity(0.3),
+                                  width: 0.5,
                                 ),
                               ),
                               child: Text(
-                                widget.project.status,
+                                theme,
                                 style: TextStyle(
-                                  color: _getStatusColor(widget.project.status),
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                                  color: colorAccent,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
-                            // Découvrir button
-                            ElevatedButton.icon(
-                              onPressed: widget.onTap,
-                              icon: const Icon(Icons.arrow_forward, size: 18),
-                              label: const Text('Découvrir'),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 10,
-                                ),
-                              ),
-                            ),
-                          ],
+                          )
+                          .toList(),
+                    ),
+                    if (widget.project.themes.length > 2)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          '+${widget.project.themes.length - 2} thèmes supplémentaires',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorAccent,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                    // Arrow indicator
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'En savoir plus',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorAccent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 14,
+                          color: colorAccent,
                         ),
                       ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
       ),
     );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'En cours':
-        return const Color(0xFF009460); // Green
-      case 'Lancé':
-        return const Color(0xFFFCD116); // Yellow
-      case 'Planifié':
-        return const Color(0xFFCE1126); // Red
-      default:
-        return Colors.grey;
-    }
   }
 }

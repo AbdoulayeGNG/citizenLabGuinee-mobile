@@ -220,8 +220,8 @@ class _QuickAccessSection extends StatelessWidget {
               ),
               _QuickAccessCard(
                 icon: Icons.event,
-                title: 'Événements',
-                onTap: () => Navigator.pushNamed(context, '/events'),
+                title: 'Formations',
+                onTap: () => Navigator.pushNamed(context, '/formations'),
               ),
               _QuickAccessCard(
                 icon: Icons.group_outlined,
