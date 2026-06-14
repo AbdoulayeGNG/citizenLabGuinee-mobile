@@ -124,7 +124,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         Navigator.pushNamed(
                           context,
                           '/article',
-                          arguments: {'id': post.id},
+                          arguments: {'id': post.slug},
                         );
                       },
                       child: Card(

@@ -173,7 +173,6 @@ String getNodeByURI(String uri) {
           id
           title
           content
-          excerpt
           date
           slug
           featuredImage {
@@ -356,6 +355,11 @@ String getPostsByCategoryQuery(
                   excerpt
                   date
                   content
+                  acf {
+                    video_url
+                    video
+                    videoUrl
+                  }
                   featuredImage {
                     node {
                       sourceUrl

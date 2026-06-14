@@ -12,7 +12,6 @@ import '../widgets/youtube_video_widget.dart';
 import '../services/api_service.dart';
 import '../widgets/post_card.dart';
 
-
 String _stripHtmlTags(String? html) {
   if (html == null) return '';
   // Very small sanitizer to remove tags — for complex HTML use flutter_html package
@@ -31,7 +30,6 @@ class EmbedPlayerWidget extends StatefulWidget {
 
 class _EmbedPlayerWidgetState extends State<EmbedPlayerWidget> {
   late WebViewController _controller;
-  bool _connectivityTested = false;
   bool _embedFailed = false;
   bool _triedNoCookie = false;
   String? _currentEmbedUrl;
@@ -81,14 +79,6 @@ class _EmbedPlayerWidgetState extends State<EmbedPlayerWidget> {
           },
           onPageFinished: (String url) {
             debugPrint('[EmbedPlayerWidget] Page finished loading: $url');
-            // If we just tested connectivity, now load the actual embed URL
-            if (!_connectivityTested && url.contains('example.com')) {
-              _connectivityTested = true;
-              debugPrint(
-                '[EmbedPlayerWidget] Connectivity test OK, now loading embed',
-              );
-              _controller.loadRequest(Uri.parse(embedUrl));
-            }
           },
           onWebResourceError: (WebResourceError error) {
             debugPrint(
@@ -147,9 +137,7 @@ class _EmbedPlayerWidgetState extends State<EmbedPlayerWidget> {
           },
         ),
       )
-      // First load a known reachable page to verify WebView network access,
-      // then the onPageFinished handler will load the real embed URL.
-      ..loadRequest(Uri.parse('https://www.example.com'));
+      ..loadRequest(Uri.parse(embedUrl));
   }
 
   @override
@@ -298,7 +286,22 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 
   @override
+  void didUpdateWidget(VideoPlayerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url) {
+      _controller?.dispose();
+      _controller = VideoPlayerController.network(widget.url);
+      _initializeFuture = _controller!.initialize().then((_) {
+        setState(() {});
+      });
+      _controller!.setLooping(false);
+      _controller!.play();
+    }
+  }
+
+  @override
   void dispose() {
+    _controller?.pause();
     _controller?.dispose();
     super.dispose();
   }
@@ -435,6 +438,7 @@ class _ArticleScreenState extends State<ArticleScreen> {
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: LazyEmbedWidget(
+                  key: ValueKey('embed-${article.id}'),
                   url: article.videoUrl!,
                   type: article.videoType,
                   thumbnailUrl: article.imageUrl,

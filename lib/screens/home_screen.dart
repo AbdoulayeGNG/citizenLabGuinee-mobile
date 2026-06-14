@@ -57,7 +57,7 @@ class HomeScreen extends StatelessWidget {
                   const _QuickAccessSection(),
 
                   // 4️⃣ Projets en aperçu (max 3)
-                  _ProjectsPreviewSection(),
+                  const _ProjectsPreviewSection(),
 
                   // 5️⃣ Actualités (max 3)
                   _NewsPreviewSection(apiService: apiService),
@@ -245,9 +245,11 @@ class _QuickAccessSection extends StatelessWidget {
 // 4️⃣ PROJECTS PREVIEW SECTION - Max 3 projets
 // ============================================================================
 class _ProjectsPreviewSection extends StatelessWidget {
+  const _ProjectsPreviewSection();
+
   @override
   Widget build(BuildContext context) {
-    final projects = Project.dummyProjects.take(3).toList();
+    final projects = ProjectCategory.projects.take(3).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -483,101 +485,79 @@ class _QuickAccessCard extends StatelessWidget {
 
 /// Carte projet compacte (pour aperçu)
 class _CompactProjectCard extends StatelessWidget {
-  final Project project;
+  final ProjectCategory project;
 
   const _CompactProjectCard({required this.project});
 
+  Color _getColorFromHex(String hexColor) {
+    hexColor = hexColor.replaceFirst('#', '');
+    return Color(int.parse('FF$hexColor', radix: 16));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colorAccent = _getColorFromHex(project.color);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 1,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            // Image compacte avec fallback
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => Navigator.pushNamed(context, '/projects'),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              // Icone compacte avec fallback
+              Container(
                 width: 60,
                 height: 60,
-                child: (project.imageUrl.isNotEmpty)
-                    ? Image.network(
-                        project.imageUrl,
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 60,
-                            height: 60,
-                            color: Colors.grey.shade300,
-                            child: const Icon(
-                              Icons.broken_image,
-                              color: Colors.grey,
-                              size: 28,
-                            ),
-                          );
-                        },
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            width: 60,
-                            height: 60,
-                            color: Colors.grey.shade200,
-                            child: const Center(
-                              child: SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      )
-                    : Container(
-                        width: 60,
-                        height: 60,
-                        color: Colors.grey.shade300,
-                        child: const Icon(
-                          Icons.image_not_supported,
-                          color: Colors.white70,
-                          size: 28,
-                        ),
+                decoration: BoxDecoration(
+                  color: colorAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorAccent.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    project.icon,
+                    style: const TextStyle(fontSize: 28),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Texte
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      project.title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
                       ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Texte
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    project.title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    project.category,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      project.themes.isNotEmpty ? project.themes.first : '',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            // Chevron
-            Icon(Icons.chevron_right, size: 20, color: Colors.grey[400]),
-          ],
+              // Chevron
+              Icon(Icons.chevron_right, size: 20, color: Colors.grey[400]),
+            ],
+          ),
         ),
       ),
     );

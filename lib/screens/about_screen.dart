@@ -657,17 +657,12 @@ class _AboutScreenState extends State<AboutScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Email: info@citizenlabguinee.org',
+              'Email: citizenlabguinee@africtivistes.org',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Téléphone: +224 XXX XXX XXX',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Adresse: Conakry, Guinée',
+              'Adresse: Labé, Guinée',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],

@@ -21,11 +21,24 @@ class AppDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: Color(0xFF009460)),
-            child: Text(
+          Container(
+            color: const Color(0xFF009460),
+            width: double.infinity,
+            padding: EdgeInsets.only(
+              top:
+                  MediaQuery.of(context).padding.top +
+                  24, // Prend en compte la statusBar
+              bottom: 24,
+              left: 16,
+              right: 16,
+            ),
+            child: const Text(
               'CitizenLab Guinée',
-              style: TextStyle(color: Colors.white, fontSize: 24),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           _buildSection('Navigation', [
@@ -54,6 +67,7 @@ class AppDrawer extends StatelessWidget {
                   context,
                   category.displayName,
                   category.slug,
+                  icon: Icons.video_library_rounded,
                 );
               }).toList(),
             ]),
@@ -106,10 +120,11 @@ class AppDrawer extends StatelessWidget {
   static ListTile _buildCategoryMenuItem(
     BuildContext context,
     String label,
-    String slug,
-  ) {
+    String slug, {
+    IconData icon = Icons.category,
+  }) {
     return ListTile(
-      leading: const Icon(Icons.category),
+      leading: Icon(icon),
       title: Text(label),
       onTap: () {
         Navigator.pop(context);

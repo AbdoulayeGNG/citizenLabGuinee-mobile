@@ -111,7 +111,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     Navigator.pushNamed(
                       context,
                       '/article',
-                      arguments: {'id': post.id},
+                      arguments: {'id': post.slug},
                     );
                   },
                   trailing: post.imageUrl != null
