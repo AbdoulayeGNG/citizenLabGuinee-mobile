@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/post.dart';
 import '../services/api_service.dart';
+import '../utils/responsive.dart';
 
 class ProjectsPage extends StatefulWidget {
   const ProjectsPage({super.key});
@@ -190,11 +191,25 @@ class _ProjectsPageState extends State<ProjectsPage> {
                   ),
                 )
               else
-                SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final item = posts[index];
-                    return _buildProjectPostCard(context, item);
-                  }, childCount: posts.length),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: Responsive.getGridColumns(
+                        context,
+                        mobile: 1,
+                        tablet: 2,
+                        largeTablet: 3,
+                      ),
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      mainAxisExtent: Responsive.isMobile(context) ? 360 : 360,
+                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final item = posts[index];
+                      return _buildProjectPostCard(context, item);
+                    }, childCount: posts.length),
+                  ),
                 ),
               SliverToBoxAdapter(
                 child: SizedBox(
@@ -210,7 +225,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   Widget _buildProjectPostCard(BuildContext context, Post item) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: EdgeInsets.zero,
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
@@ -241,32 +256,36 @@ class _ProjectsPageState extends State<ProjectsPage> {
                     : const Icon(Icons.image_not_supported),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    item.excerpt ?? 'Description indisponible',
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 14,
-                      height: 1.5,
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: Text(
+                        item.excerpt ?? 'Description indisponible',
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 14,
+                          height: 1.5,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

@@ -6,18 +6,11 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/post.dart';
-import '../models/video_model.dart';
-import '../widgets/video_player_screen.dart';
 import '../widgets/youtube_video_widget.dart';
 import '../services/api_service.dart';
 import '../widgets/post_card.dart';
 
-String _stripHtmlTags(String? html) {
-  if (html == null) return '';
-  // Very small sanitizer to remove tags — for complex HTML use flutter_html package
-  final withoutTags = html.replaceAll(RegExp(r'<[^>]*>', multiLine: true), '');
-  return withoutTags.replaceAll('&nbsp;', ' ').trim();
-}
+import '../utils/html_utils.dart';
 
 class EmbedPlayerWidget extends StatefulWidget {
   final String url;
@@ -422,6 +415,12 @@ class _ArticleScreenState extends State<ArticleScreen> {
 
     final article = _article!;
 
+    // Constrain reading width for tablets and desktops (max 800px)
+    final screenWidth = MediaQuery.of(context).size.width;
+    final horizontalPadding = screenWidth > 800
+        ? (screenWidth - 800) / 2
+        : 16.0;
+
     // Build the page showing possible video + content and related posts
     final relatedPosts = apiService.posts
         .where((p) => p.slug != article.slug)
@@ -436,7 +435,10 @@ class _ArticleScreenState extends State<ArticleScreen> {
             // Video or featured image (lazy embed)
             if (article.videoUrl != null && article.videoUrl!.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 16.0,
+                ),
                 child: LazyEmbedWidget(
                   key: ValueKey('embed-${article.id}'),
                   url: article.videoUrl!,
@@ -446,7 +448,10 @@ class _ArticleScreenState extends State<ArticleScreen> {
               )
             else if (article.imageUrl != null && article.imageUrl!.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 16.0,
+                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: CachedNetworkImage(
@@ -471,7 +476,10 @@ class _ArticleScreenState extends State<ArticleScreen> {
               ),
 
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 16.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -504,7 +512,7 @@ class _ArticleScreenState extends State<ArticleScreen> {
                   const SizedBox(height: 20),
 
                   Text(
-                    _stripHtmlTags(article.content),
+                    HtmlUtils.stripHtmlAndDecodeEntities(article.content),
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 20),
@@ -514,7 +522,10 @@ class _ArticleScreenState extends State<ArticleScreen> {
 
             if (relatedPosts.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 16.0,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

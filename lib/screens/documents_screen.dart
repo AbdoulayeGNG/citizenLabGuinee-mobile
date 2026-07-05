@@ -5,6 +5,7 @@ import '../models/post.dart';
 import '../repositories/document_repository.dart';
 import '../screens/document_viewer_screen.dart';
 import '../services/api_service.dart';
+import '../utils/responsive.dart';
 import '../widgets/download_button.dart';
 
 class DocumentsScreen extends StatefulWidget {
@@ -109,8 +110,19 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             );
           }
 
-          return ListView.builder(
+          return GridView.builder(
             padding: const EdgeInsets.all(16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: Responsive.getGridColumns(
+                context,
+                mobile: 1,
+                tablet: 2,
+                largeTablet: 3,
+              ),
+              mainAxisExtent: Responsive.isMobile(context) ? 160 : 180,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+            ),
             itemCount: documents.length,
             itemBuilder: (context, index) {
               final post = documents[index];
@@ -125,7 +137,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Widget _buildDocumentCard(BuildContext context, Post post) {
     final documentUrl = post.documentUrl;
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -153,13 +165,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            if (documentUrl == null)
-              Text(
-                'Aucun fichier document détecté dans ce post.',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
-              ),
+            if (documentUrl == null) const SizedBox.shrink(),
             if (documentUrl != null)
               FutureBuilder<bool>(
                 future: _repo.isDownloaded(post.id),

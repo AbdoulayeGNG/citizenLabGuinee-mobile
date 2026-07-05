@@ -4,6 +4,7 @@ import '../services/api_service.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/post_card.dart';
 import '../models/project.dart';
+import '../utils/responsive.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -14,7 +15,10 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CitizenLab Guinée'),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text('CitizenLab Guinée'),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -105,12 +109,16 @@ class _HeroSection extends StatelessWidget {
           Icon(Icons.public, size: 36, color: Colors.white.withOpacity(0.9)),
           const SizedBox(height: 12),
           // Titre principal
-          Text(
-            'CitizenLab Guinée',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'CitizenLab Guinée',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -204,14 +212,19 @@ class _QuickAccessSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Grid 2x2
+          // Grid adaptatif (2 colonnes mobile, 4 tablette)
           GridView.count(
-            crossAxisCount: 2,
+            crossAxisCount: Responsive.getGridColumns(
+              context,
+              mobile: 2,
+              tablet: 4,
+              largeTablet: 4,
+            ),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.5,
+            childAspectRatio: Responsive.isMobile(context) ? 1.5 : 2.0,
             children: [
               _QuickAccessCard(
                 icon: Icons.work_outline,
@@ -328,29 +341,38 @@ class _NewsPreviewSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Scroll horizontal
-          SizedBox(
-            height: 160,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: newsList.length,
-              itemBuilder: (context, index) {
-                final post = newsList[index];
-                return Padding(
-                  padding: EdgeInsets.only(
-                    right: index == newsList.length - 1 ? 0 : 12,
-                  ),
-                  child: PostCard(
-                    post: post,
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      '/article',
-                      arguments: {'id': post.slug},
-                    ),
-                  ),
-                );
-              },
-            ),
+          // Scroll horizontal avec LayoutBuilder
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cardWidth = Responsive.isMobile(context)
+                  ? constraints.maxWidth * 0.6
+                  : constraints.maxWidth * 0.3;
+              final totalHeight =
+                  (cardWidth * 0.45) + 80; // imageHeight + texte padding
+              return SizedBox(
+                height: totalHeight,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: newsList.length,
+                  itemBuilder: (context, index) {
+                    final post = newsList[index];
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        right: index == newsList.length - 1 ? 0 : 12,
+                      ),
+                      child: PostCard(
+                        post: post,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          '/article',
+                          arguments: {'id': post.slug},
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -403,29 +425,37 @@ class _PodcastPreviewSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Scroll horizontal
-          SizedBox(
-            height: 160,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: podcastList.length,
-              itemBuilder: (context, index) {
-                final post = podcastList[index];
-                return Padding(
-                  padding: EdgeInsets.only(
-                    right: index == podcastList.length - 1 ? 0 : 12,
-                  ),
-                  child: PostCard(
-                    post: post,
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      '/article',
-                      arguments: {'id': post.slug},
-                    ),
-                  ),
-                );
-              },
-            ),
+          // Scroll horizontal adaptatif
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cardWidth = Responsive.isMobile(context)
+                  ? constraints.maxWidth * 0.6
+                  : constraints.maxWidth * 0.3;
+              final totalHeight = (cardWidth * 0.45) + 80;
+              return SizedBox(
+                height: totalHeight,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: podcastList.length,
+                  itemBuilder: (context, index) {
+                    final post = podcastList[index];
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        right: index == podcastList.length - 1 ? 0 : 12,
+                      ),
+                      child: PostCard(
+                        post: post,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          '/article',
+                          arguments: {'id': post.slug},
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ],
       ),

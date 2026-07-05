@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/project.dart';
 import '../widgets/project_card.dart';
+import '../utils/responsive.dart';
 
 class ProjectsScreen extends StatefulWidget {
   const ProjectsScreen({super.key});
@@ -36,14 +37,13 @@ class _ProjectsScreenState extends State<ProjectsScreen>
   @override
   Widget build(BuildContext context) {
     final projects = ProjectCategory.projects;
-    final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
       body: CustomScrollView(
         slivers: [
           // Hero Banner
           SliverAppBar(
-            expandedHeight: isMobile ? 380 : 340,
+            expandedHeight: Responsive.isMobile(context) ? 380 : 340,
             floating: false,
             pinned: true,
             backgroundColor: const Color(0xFF009460),
@@ -152,36 +152,27 @@ class _ProjectsScreenState extends State<ProjectsScreen>
           ),
           // Projects list
           SliverPadding(
-            padding: EdgeInsets.all(isMobile ? 12 : 16),
-            sliver: isMobile
-                ? SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final project = projects[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: ProjectCard(
-                          project: project,
-                          onTap: () => _navigateToDetails(context, project),
-                        ),
-                      );
-                    }, childCount: projects.length),
-                  )
-                : SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisExtent: 340,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                        ),
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final project = projects[index];
-                      return ProjectCard(
-                        project: project,
-                        onTap: () => _navigateToDetails(context, project),
-                      );
-                    }, childCount: projects.length),
-                  ),
+            padding: EdgeInsets.all(Responsive.isMobile(context) ? 12 : 16),
+            sliver: SliverGrid(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: Responsive.getGridColumns(
+                  context,
+                  mobile: 1,
+                  tablet: 2,
+                  largeTablet: 3,
+                ),
+                mainAxisExtent: Responsive.isMobile(context) ? 360 : 380,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+              ),
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final project = projects[index];
+                return ProjectCard(
+                  project: project,
+                  onTap: () => _navigateToDetails(context, project),
+                );
+              }, childCount: projects.length),
+            ),
           ),
           // Bottom spacing
           const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
@@ -211,7 +202,6 @@ class ProjectDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorAccent = _getColorFromHex(project.color);
-    final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
       body: CustomScrollView(
@@ -294,7 +284,7 @@ class ProjectDetailsScreen extends StatelessWidget {
           // Content
           SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.all(isMobile ? 16 : 24),
+              padding: EdgeInsets.all(Responsive.isMobile(context) ? 16 : 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -440,10 +430,31 @@ class ProjectDetailsScreen extends StatelessWidget {
   }
 
   void _openContact(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fonctionnalité de contact à implémenter'),
-        duration: Duration(seconds: 2),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Nous contacter'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Email: citizenlabguinee@africtivistes.org',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Adresse: Labé, Guinée',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fermer'),
+          ),
+        ],
       ),
     );
   }

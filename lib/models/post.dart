@@ -1,3 +1,5 @@
+import '../utils/html_utils.dart';
+
 /// Modèle pour un article de blog/actualité
 class Post {
   final String id;
@@ -193,10 +195,10 @@ class Post {
 
     return Post(
       id: json['id'] ?? '',
-      title: json['title'] ?? '',
+      title: HtmlUtils.decodeEntities(json['title'] ?? ''),
       slug: json['slug'] ?? '',
       content: json['content'] ?? '',
-      excerpt: json['excerpt'],
+      excerpt: HtmlUtils.stripHtmlAndDecodeEntities(json['excerpt']),
       date: json['date'] ?? '',
       imageUrl: json['featuredImage']?['node']?['sourceUrl'],
       imageAlt: json['featuredImage']?['node']?['altText'],

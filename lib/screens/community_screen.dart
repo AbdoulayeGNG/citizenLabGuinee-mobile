@@ -4,30 +4,20 @@ import '../services/api_service.dart';
 import '../models/team_member.dart';
 import '../widgets/member_card.dart';
 import 'member_detail_screen.dart';
+import '../utils/responsive.dart';
 
 class CommunityScreen extends StatelessWidget {
   const CommunityScreen({Key? key}) : super(key: key);
 
   /// Détermine le nombre de colonnes en fonction de la largeur d'écran
   int _getCrossAxisCount(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-
-    // Petit écran mobile (< 400px) : 1 colonne
-    if (width < 400) {
-      return 1;
-    }
-    // Mobile large (400-600px) : 2 colonnes
-    else if (width < 600) {
-      return 2;
-    }
-    // Tablette (600-900px) : 2 colonnes
-    else if (width < 900) {
-      return 2;
-    }
-    // Desktop et grand écran : 3 colonnes
-    else {
-      return 3;
-    }
+    if (MediaQuery.of(context).size.width < 400) return 1;
+    return Responsive.getGridColumns(
+      context,
+      mobile: 2,
+      tablet: 2,
+      largeTablet: 3,
+    );
   }
 
   @override

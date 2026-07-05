@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:provider/provider.dart';
 import '../models/post.dart';
 import '../services/api_service.dart';
+import '../utils/responsive.dart';
 
 String _stripHtml(String htmlString) {
   final RegExp exp = RegExp(r'<[^>]*>', multiLine: true, caseSensitive: false);
@@ -102,7 +103,7 @@ class NewsCard extends StatelessWidget {
     final dateFormat = DateFormat('dd MMM yyyy', 'fr_FR');
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      margin: EdgeInsets.zero, // Marges gérées par le GridView parent
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
@@ -163,38 +164,46 @@ class NewsCard extends StatelessWidget {
                 ),
               ),
             // Content section
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Hero(
-                    tag: 'news-title-${post.id}',
-                    child: Text(
-                      post.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Hero(
+                      tag: 'news-title-${post.id}',
+                      child: Text(
+                        post.title,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: Responsive.getScaledFontSize(
+                                context,
+                                18,
+                              ),
+                            ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    dateFormat.format(DateTime.parse(post.date)),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _stripHtml(post.excerpt ?? ''),
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      dateFormat.format(DateTime.parse(post.date)),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: Text(
+                        _stripHtml(post.excerpt ?? ''),
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -255,8 +264,19 @@ class _NewsListScreenState extends State<NewsListScreen>
           slivers: [
             SliverToBoxAdapter(child: const NewsBanner()),
             SliverPadding(
-              padding: const EdgeInsets.only(top: 16.0),
-              sliver: SliverList(
+              padding: const EdgeInsets.all(16.0),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: Responsive.getGridColumns(
+                    context,
+                    mobile: 1,
+                    tablet: 2,
+                    largeTablet: 3,
+                  ),
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  mainAxisExtent: Responsive.isMobile(context) ? 400 : 420,
+                ),
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final post = posts[index];
                   return NewsCard(post: post);

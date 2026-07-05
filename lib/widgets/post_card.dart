@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/post.dart';
 import 'package:intl/intl.dart';
+import '../utils/responsive.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
@@ -11,13 +12,19 @@ class PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Largeur dynamique : occupe ~60% de l'écran sur mobile, 30% sur tablette
+    final cardWidth = Responsive.isMobile(context)
+        ? Responsive.width(context) * 0.6
+        : Responsive.width(context) * 0.3;
+
+    final imageHeight = cardWidth * 0.45; // Aspect ratio dynamique
+
     final card = Card(
       margin: const EdgeInsets.only(left: 16, right: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
-        width: 200,
+        width: cardWidth,
         padding: const EdgeInsets.all(8),
-        // Constrain max height to avoid overflow when parent gives tight constraints
-        constraints: const BoxConstraints(maxHeight: 140),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -29,18 +36,17 @@ class PostCard extends StatelessWidget {
                   children: [
                     CachedNetworkImage(
                       imageUrl: post.imageUrl!,
-                      height: 72,
+                      height: imageHeight,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) =>
-                          const Center(child: CircularProgressIndicator()),
+                      placeholder: (context, url) => const SizedBox.shrink(),
                       errorWidget: (context, url, error) =>
                           const Icon(Icons.error),
                     ),
                     if (post.videoUrl != null)
                       Container(
-                        width: 42,
-                        height: 42,
+                        width: Responsive.getScaledFontSize(context, 42),
+                        height: Responsive.getScaledFontSize(context, 42),
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.5),
                           shape: BoxShape.circle,
@@ -55,7 +61,7 @@ class PostCard extends StatelessWidget {
               )
             else
               Container(
-                height: 72,
+                height: imageHeight,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: Theme.of(context).primaryColor.withOpacity(0.1),
@@ -71,18 +77,19 @@ class PostCard extends StatelessWidget {
             // Use FittedBox to scale down content when vertical space is very tight
             Expanded(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    post.title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
+                  Expanded(
+                    child: Text(
+                      post.title,
+                      style: TextStyle(
+                        fontSize: Responsive.getScaledFontSize(context, 14),
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -91,7 +98,7 @@ class PostCard extends StatelessWidget {
                       'fr_FR',
                     ).format(DateTime.parse(post.date)),
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: Responsive.getScaledFontSize(context, 11),
                       color: Colors.grey[600],
                       fontWeight: FontWeight.w500,
                     ),

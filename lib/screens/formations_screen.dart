@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
+import '../utils/responsive.dart';
 
 String _stripHtml(String htmlString) {
   final RegExp exp = RegExp(r'<[^>]*>', multiLine: true, caseSensitive: false);
@@ -41,8 +42,19 @@ class FormationsScreen extends StatelessWidget {
                 ],
               ),
             )
-          : ListView.builder(
+          : GridView.builder(
               padding: const EdgeInsets.all(16),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: Responsive.getGridColumns(
+                  context,
+                  mobile: 1,
+                  tablet: 2,
+                  largeTablet: 3,
+                ),
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                mainAxisExtent: Responsive.isMobile(context) ? 360 : 360,
+              ),
               itemCount: events.length,
               itemBuilder: (context, index) {
                 final event = events[index];
@@ -51,7 +63,7 @@ class FormationsScreen extends StatelessWidget {
                     Navigator.pushNamed(context, '/article', arguments: event);
                   },
                   child: Card(
-                    margin: const EdgeInsets.only(bottom: 16),
+                    margin: EdgeInsets.zero,
                     clipBehavior: Clip.antiAlias,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,29 +88,34 @@ class FormationsScreen extends StatelessWidget {
                           ),
                         ),
                         // Event info
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _stripHtml(event.title),
-                                style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _stripHtml(
-                                  event.excerpt ?? 'Description indisponible',
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _stripHtml(event.title),
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: Colors.grey[600]),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                                const SizedBox(height: 8),
+                                Expanded(
+                                  child: Text(
+                                    _stripHtml(
+                                      event.excerpt ??
+                                          'Description indisponible',
+                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(color: Colors.grey[600]),
+                                    maxLines: 4,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
