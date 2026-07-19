@@ -97,9 +97,8 @@ class PostCard extends StatelessWidget {
                       'dd MMM yyyy',
                       'fr_FR',
                     ).format(DateTime.parse(post.date)),
-                    style: TextStyle(
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontSize: Responsive.getScaledFontSize(context, 11),
-                      color: Colors.grey[600],
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,

@@ -9,6 +9,7 @@ import '../models/post.dart';
 import '../widgets/youtube_video_widget.dart';
 import '../services/api_service.dart';
 import '../widgets/post_card.dart';
+import '../utils/responsive.dart';
 
 import '../utils/html_utils.dart';
 
@@ -421,6 +422,11 @@ class _ArticleScreenState extends State<ArticleScreen> {
         ? (screenWidth - 800) / 2
         : 16.0;
 
+    final postCardWidth = Responsive.isMobile(context)
+        ? screenWidth * 0.6
+        : screenWidth * 0.3;
+    final postCardHeight = postCardWidth * 0.45 + 80;
+
     // Build the page showing possible video + content and related posts
     final relatedPosts = apiService.posts
         .where((p) => p.slug != article.slug)
@@ -535,7 +541,7 @@ class _ArticleScreenState extends State<ArticleScreen> {
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
-                      height: 200,
+                      height: postCardHeight,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount: relatedPosts.length > 3

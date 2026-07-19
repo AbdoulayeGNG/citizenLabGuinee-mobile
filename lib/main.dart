@@ -9,6 +9,7 @@ import 'models/hive_team_member.dart';
 import 'models/downloaded_document.dart';
 import 'services/api_service.dart';
 import 'theme.dart';
+import 'theme_provider.dart';
 import 'routes.dart';
 
 void main() async {
@@ -39,19 +40,30 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) {
-        final service = ApiService();
-        // Start initialization in background without blocking UI
-        service.init();
-        return service;
-      },
-      child: MaterialApp(
-        title: 'CitizenLab Guinée',
-        theme: AppTheme.lightTheme,
-        debugShowCheckedModeBanner: false,
-        home: const HomeScreen(),
-        onGenerateRoute: AppRoutes.generateRoute,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) {
+            final service = ApiService();
+            // Start initialization in background without blocking UI
+            service.init();
+            return service;
+          },
+        ),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'CitizenLab Guinée',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.themeMode,
+            debugShowCheckedModeBanner: false,
+            home: const HomeScreen(),
+            onGenerateRoute: AppRoutes.generateRoute,
+          );
+        },
       ),
     );
   }

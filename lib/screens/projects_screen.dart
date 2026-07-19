@@ -161,7 +161,7 @@ class _ProjectsScreenState extends State<ProjectsScreen>
                   tablet: 2,
                   largeTablet: 3,
                 ),
-                mainAxisExtent: Responsive.isMobile(context) ? 360 : 380,
+                mainAxisExtent: 380,
                 mainAxisSpacing: 16,
                 crossAxisSpacing: 16,
               ),
@@ -293,7 +293,6 @@ class ProjectDetailsScreen extends StatelessWidget {
                     project.title,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -311,7 +310,6 @@ class ProjectDetailsScreen extends StatelessWidget {
                   Text(
                     project.description,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.black54,
                       height: 1.8,
                     ),
                   ),
@@ -321,7 +319,6 @@ class ProjectDetailsScreen extends StatelessWidget {
                     'Domaines d\'expertise',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -362,8 +359,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 theme,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(color: Colors.black87),
+                                style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             ),
                           ],

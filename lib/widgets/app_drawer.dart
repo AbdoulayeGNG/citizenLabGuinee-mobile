@@ -44,6 +44,7 @@ class AppDrawer extends StatelessWidget {
           _buildSection('Navigation', [
             _buildMenuItem(context, 'Accueil', Icons.home, '/'),
             _buildMenuItem(context, 'Actualités', Icons.newspaper, '/news'),
+            _buildMenuItem(context, 'Podcasts', Icons.podcasts, '/podcasts'),
             _buildMenuItem(context, 'Projets', Icons.work_outline, '/projects'),
             _buildMenuItem(
               context,
@@ -60,22 +61,16 @@ class AppDrawer extends StatelessWidget {
             _buildMenuItem(context, 'Équipe', Icons.people, '/community'),
           ]),
           if (videoCategories.isNotEmpty) ...[
-            const Divider(),
-            _buildSection('Catégories', [
-              ...videoCategories.map((category) {
-                return _buildCategoryMenuItem(
-                  context,
-                  category.displayName,
-                  category.slug,
-                  icon: Icons.video_library_rounded,
-                );
-              }).toList(),
-            ]),
+            ...videoCategories.map((category) {
+              return _buildCategoryMenuItem(
+                context,
+                category.displayName,
+                category.slug,
+                icon: Icons.video_library_rounded,
+              );
+            }).toList(),
           ],
-          const Divider(),
-          _buildSection('À propos', [
-            _buildMenuItem(context, 'Qui sommes-nous', Icons.info, '/about'),
-          ]),
+          _buildMenuItem(context, 'Qui sommes-nous', Icons.info, '/about'),
         ],
       ),
     );
@@ -86,7 +81,7 @@ class AppDrawer extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
           child: Text(
             title,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
@@ -104,6 +99,10 @@ class AppDrawer extends StatelessWidget {
     String? route,
   ) {
     return ListTile(
+      dense: true,
+      visualDensity: VisualDensity.compact,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      minVerticalPadding: 0,
       leading: Icon(icon),
       title: Text(label),
       onTap: () {
@@ -124,6 +123,10 @@ class AppDrawer extends StatelessWidget {
     IconData icon = Icons.category,
   }) {
     return ListTile(
+      dense: true,
+      visualDensity: VisualDensity.compact,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      minVerticalPadding: 0,
       leading: Icon(icon),
       title: Text(label),
       onTap: () {

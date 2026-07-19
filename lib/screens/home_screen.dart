@@ -5,6 +5,7 @@ import '../widgets/app_drawer.dart';
 import '../widgets/post_card.dart';
 import '../models/project.dart';
 import '../utils/responsive.dart';
+import '../theme_provider.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -12,6 +13,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final apiService = Provider.of<ApiService>(context);
+    final themeProvider = context.watch<ThemeProvider>();
 
     return Scaffold(
       appBar: AppBar(
@@ -23,6 +25,12 @@ class HomeScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () => Navigator.pushNamed(context, '/search'),
+          ),
+          IconButton(
+            icon: Icon(
+              themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+            ),
+            onPressed: () => context.read<ThemeProvider>().toggleTheme(),
           ),
           IconButton(
             icon: apiService.isLoading
@@ -168,7 +176,6 @@ class _AboutSection extends StatelessWidget {
             'décisions qui les concernent.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontSize: 14,
-              color: Colors.grey[700],
               height: 1.6,
             ),
           ),
@@ -345,8 +352,8 @@ class _NewsPreviewSection extends StatelessWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final cardWidth = Responsive.isMobile(context)
-                  ? constraints.maxWidth * 0.6
-                  : constraints.maxWidth * 0.3;
+                  ? Responsive.width(context) * 0.6
+                  : Responsive.width(context) * 0.3;
               final totalHeight =
                   (cardWidth * 0.45) + 80; // imageHeight + texte padding
               return SizedBox(
@@ -429,8 +436,8 @@ class _PodcastPreviewSection extends StatelessWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final cardWidth = Responsive.isMobile(context)
-                  ? constraints.maxWidth * 0.6
-                  : constraints.maxWidth * 0.3;
+                  ? Responsive.width(context) * 0.6
+                  : Responsive.width(context) * 0.3;
               final totalHeight = (cardWidth * 0.45) + 80;
               return SizedBox(
                 height: totalHeight,
@@ -497,10 +504,9 @@ class _QuickAccessCard extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -566,10 +572,9 @@ class _CompactProjectCard extends StatelessWidget {
                   children: [
                     Text(
                       project.title,
-                      style: const TextStyle(
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: Colors.black87,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -577,7 +582,9 @@ class _CompactProjectCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       project.themes.isNotEmpty ? project.themes.first : '',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: 12,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
