@@ -150,18 +150,18 @@ class ApiService extends ChangeNotifier {
           'ApiService._loadCachedData(): loaded ${_posts.length} posts from Hive',
         );
 
-          // Preload featured images into cache (non-blocking)
-          for (final p in _posts) {
-            try {
-              final url = p.imageUrl;
-              if (url != null && url.isNotEmpty) {
-                final provider = CachedNetworkImageProvider(url);
-                provider.resolve(const ImageConfiguration());
-              }
-            } catch (e) {
-              debugPrint('Precache post image failed: $e');
+        // Preload featured images into cache (non-blocking)
+        for (final p in _posts) {
+          try {
+            final url = p.imageUrl;
+            if (url != null && url.isNotEmpty) {
+              final provider = CachedNetworkImageProvider(url);
+              provider.resolve(const ImageConfiguration());
             }
+          } catch (e) {
+            debugPrint('Precache post image failed: $e');
           }
+        }
       }
 
       final hiveCategories = await _categoriesRepo.getAllCategoriesFromCache();
@@ -275,20 +275,22 @@ class ApiService extends ChangeNotifier {
       );
 
       _posts = serialized
-          .map((m) => Post(
-                id: m['id'] ?? '',
-                title: m['title'] ?? '',
-                slug: m['slug'] ?? '',
-                content: m['content'] ?? '',
-                excerpt: m['excerpt'],
-                date: m['date'] ?? '',
-                imageUrl: m['imageUrl'],
-                imageAlt: m['imageAlt'],
-                authorName: m['authorName'],
-                categories: (m['categories'] as List?)?.cast<String>(),
-                videoUrl: m['videoUrl'],
-                videoType: m['videoType'],
-              ))
+          .map(
+            (m) => Post(
+              id: m['id'] ?? '',
+              title: m['title'] ?? '',
+              slug: m['slug'] ?? '',
+              content: m['content'] ?? '',
+              excerpt: m['excerpt'],
+              date: m['date'] ?? '',
+              imageUrl: m['imageUrl'],
+              imageAlt: m['imageAlt'],
+              authorName: m['authorName'],
+              categories: (m['categories'] as List?)?.cast<String>(),
+              videoUrl: m['videoUrl'],
+              videoType: m['videoType'],
+            ),
+          )
           .toList();
 
       // Debug: log how many posts contain a detected video URL
@@ -335,6 +337,7 @@ class ApiService extends ChangeNotifier {
   Future<void> _fetchCategories() async {
     try {
       final categoriesData = await _graphqlService.fetchCategories();
+      _categories.clear(); // Vider avant d'ajouter les nouvelles données
       _categories = categoriesData
           .map((json) => Category.fromJson(Map<String, dynamic>.from(json)))
           .toList();
@@ -515,7 +518,19 @@ class ApiService extends ChangeNotifier {
   }
 
   Future<List<Post>> fetchPostsByCategory(String categorySlug) async {
-    if (_isOffline) return [];
+    final normalizedSlug = categorySlug.toLowerCase();
+    if (_isOffline) {
+      return _posts
+          .where(
+            (post) =>
+                post.categories?.any(
+                  (cat) => cat.toLowerCase().contains(normalizedSlug),
+                ) ??
+                false,
+          )
+          .toList();
+    }
+
     try {
       final categoryData = await _graphqlService.fetchPostsByCategory(
         categorySlug,
@@ -531,7 +546,15 @@ class ApiService extends ChangeNotifier {
           .toList();
     } catch (e) {
       debugPrint('Erreur fetch posts by category: $e');
-      return [];
+      return _posts
+          .where(
+            (post) =>
+                post.categories?.any(
+                  (cat) => cat.toLowerCase().contains(normalizedSlug),
+                ) ??
+                false,
+          )
+          .toList();
     }
   }
 }

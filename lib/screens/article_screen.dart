@@ -6,18 +6,12 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/post.dart';
-import '../models/video_model.dart';
-import '../widgets/video_player_screen.dart';
 import '../widgets/youtube_video_widget.dart';
 import '../services/api_service.dart';
 import '../widgets/post_card.dart';
+import '../utils/responsive.dart';
 
-String _stripHtmlTags(String? html) {
-  if (html == null) return '';
-  // Very small sanitizer to remove tags — for complex HTML use flutter_html package
-  final withoutTags = html.replaceAll(RegExp(r'<[^>]*>', multiLine: true), '');
-  return withoutTags.replaceAll('&nbsp;', ' ').trim();
-}
+import '../utils/html_utils.dart';
 
 class EmbedPlayerWidget extends StatefulWidget {
   final String url;
@@ -30,7 +24,6 @@ class EmbedPlayerWidget extends StatefulWidget {
 
 class _EmbedPlayerWidgetState extends State<EmbedPlayerWidget> {
   late WebViewController _controller;
-  bool _connectivityTested = false;
   bool _embedFailed = false;
   bool _triedNoCookie = false;
   String? _currentEmbedUrl;
@@ -80,14 +73,6 @@ class _EmbedPlayerWidgetState extends State<EmbedPlayerWidget> {
           },
           onPageFinished: (String url) {
             debugPrint('[EmbedPlayerWidget] Page finished loading: $url');
-            // If we just tested connectivity, now load the actual embed URL
-            if (!_connectivityTested && url.contains('example.com')) {
-              _connectivityTested = true;
-              debugPrint(
-                '[EmbedPlayerWidget] Connectivity test OK, now loading embed',
-              );
-              _controller.loadRequest(Uri.parse(embedUrl));
-            }
           },
           onWebResourceError: (WebResourceError error) {
             debugPrint(
@@ -146,9 +131,7 @@ class _EmbedPlayerWidgetState extends State<EmbedPlayerWidget> {
           },
         ),
       )
-      // First load a known reachable page to verify WebView network access,
-      // then the onPageFinished handler will load the real embed URL.
-      ..loadRequest(Uri.parse('https://www.example.com'));
+      ..loadRequest(Uri.parse(embedUrl));
   }
 
   @override
@@ -297,7 +280,22 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 
   @override
+  void didUpdateWidget(VideoPlayerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url) {
+      _controller?.dispose();
+      _controller = VideoPlayerController.network(widget.url);
+      _initializeFuture = _controller!.initialize().then((_) {
+        setState(() {});
+      });
+      _controller!.setLooping(false);
+      _controller!.play();
+    }
+  }
+
+  @override
   void dispose() {
+    _controller?.pause();
     _controller?.dispose();
     super.dispose();
   }
@@ -418,6 +416,17 @@ class _ArticleScreenState extends State<ArticleScreen> {
 
     final article = _article!;
 
+    // Constrain reading width for tablets and desktops (max 800px)
+    final screenWidth = MediaQuery.of(context).size.width;
+    final horizontalPadding = screenWidth > 800
+        ? (screenWidth - 800) / 2
+        : 16.0;
+
+    final postCardWidth = Responsive.isMobile(context)
+        ? screenWidth * 0.6
+        : screenWidth * 0.3;
+    final postCardHeight = postCardWidth * 0.45 + 80;
+
     // Build the page showing possible video + content and related posts
     final relatedPosts = apiService.posts
         .where((p) => p.slug != article.slug)
@@ -432,8 +441,12 @@ class _ArticleScreenState extends State<ArticleScreen> {
             // Video or featured image (lazy embed)
             if (article.videoUrl != null && article.videoUrl!.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 16.0,
+                ),
                 child: LazyEmbedWidget(
+                  key: ValueKey('embed-${article.id}'),
                   url: article.videoUrl!,
                   type: article.videoType,
                   thumbnailUrl: article.imageUrl,
@@ -441,7 +454,10 @@ class _ArticleScreenState extends State<ArticleScreen> {
               )
             else if (article.imageUrl != null && article.imageUrl!.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 16.0,
+                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: CachedNetworkImage(
@@ -466,7 +482,10 @@ class _ArticleScreenState extends State<ArticleScreen> {
               ),
 
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 16.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -499,7 +518,7 @@ class _ArticleScreenState extends State<ArticleScreen> {
                   const SizedBox(height: 20),
 
                   Text(
-                    _stripHtmlTags(article.content),
+                    HtmlUtils.stripHtmlAndDecodeEntities(article.content),
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 20),
@@ -509,7 +528,10 @@ class _ArticleScreenState extends State<ArticleScreen> {
 
             if (relatedPosts.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: 16.0,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -519,7 +541,7 @@ class _ArticleScreenState extends State<ArticleScreen> {
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
-                      height: 200,
+                      height: postCardHeight,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount: relatedPosts.length > 3

@@ -1,4 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/post.dart';
+import '../repositories/document_repository.dart';
+import '../screens/document_viewer_screen.dart';
+import '../services/api_service.dart';
+import '../utils/responsive.dart';
+import '../widgets/download_button.dart';
 
 class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({super.key});
@@ -8,99 +16,133 @@ class DocumentsScreen extends StatefulWidget {
 }
 
 class _DocumentsScreenState extends State<DocumentsScreen> {
-  // Mock documents data
-  final List<MockDocument> mockDocuments = [
-    MockDocument(
-      id: '1',
-      title: 'Rapport Annuel 2025',
-      fileName: 'rapport_annuel_2025.pdf',
-      size: '2.5 MB',
-      uploadDate: '15 janvier 2026',
-      isDownloaded: true,
-      downloadUrl: 'https://example.com/rapport_2025.pdf',
-    ),
-    MockDocument(
-      id: '2',
-      title: 'Guide d\'Utilisation',
-      fileName: 'guide_utilisation.pdf',
-      size: '1.8 MB',
-      uploadDate: '10 janvier 2026',
-      isDownloaded: false,
-      downloadUrl: 'https://example.com/guide.pdf',
-    ),
-    MockDocument(
-      id: '3',
-      title: 'Politique de Confidentialité',
-      fileName: 'politique_confidentialite.pdf',
-      size: '0.8 MB',
-      uploadDate: '05 janvier 2026',
-      isDownloaded: true,
-      downloadUrl: 'https://example.com/politique.pdf',
-    ),
-    MockDocument(
-      id: '4',
-      title: 'Conditions d\'Utilisation',
-      fileName: 'conditions_utilisation.pdf',
-      size: '1.2 MB',
-      uploadDate: '01 janvier 2026',
-      isDownloaded: false,
-      downloadUrl: 'https://example.com/conditions.pdf',
-    ),
-    MockDocument(
-      id: '5',
-      title: 'Présentation du Projet',
-      fileName: 'presentation_projet.pdf',
-      size: '3.1 MB',
-      uploadDate: '28 décembre 2025',
-      isDownloaded: true,
-      downloadUrl: 'https://example.com/presentation.pdf',
-    ),
-  ];
+  late Future<List<Post>> _documentsFuture;
+  final DocumentRepository _repo = DocumentRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    _documentsFuture = Provider.of<ApiService>(
+      context,
+      listen: false,
+    ).fetchPostsByCategory('documents');
+  }
+
+  String _stripHtml(String text) {
+    final regex = RegExp(r'<[^>]*>', multiLine: true, caseSensitive: false);
+    return text.replaceAll(regex, '').trim();
+  }
+
+  Future<void> _openDocument(String id, String title) async {
+    final doc = await _repo.getById(id);
+    if (doc != null &&
+        doc.localPath != null &&
+        File(doc.localPath!).existsSync()) {
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              DocumentViewerScreen(localPath: doc.localPath!, title: title),
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Document non trouvé en local. Téléchargez-le d’abord.'),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Documents'), elevation: 0),
-      body: _buildDocumentList(context),
-    );
-  }
+      body: FutureBuilder<List<Post>>(
+        future: _documentsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-  Widget _buildDocumentList(BuildContext context) {
-    if (mockDocuments.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.description_outlined, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'Aucun document disponible',
-              style: Theme.of(context).textTheme.titleMedium,
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  const Text('Erreur lors du chargement des documents'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _documentsFuture = Provider.of<ApiService>(
+                          context,
+                          listen: false,
+                        ).fetchPostsByCategory('documents');
+                      });
+                    },
+                    child: const Text('Réessayer'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final documents = snapshot.data ?? [];
+          if (documents.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.description_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Aucun document disponible'),
+                ],
+              ),
+            );
+          }
+
+          return GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: Responsive.getGridColumns(
+                context,
+                mobile: 1,
+                tablet: 2,
+                largeTablet: 3,
+              ),
+              mainAxisExtent: Responsive.isMobile(context) ? 160 : 180,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
             ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: mockDocuments.length,
-      itemBuilder: (context, index) {
-        final document = mockDocuments[index];
-        return _buildDocumentCard(context, document);
-      },
+            itemCount: documents.length,
+            itemBuilder: (context, index) {
+              final post = documents[index];
+              return _buildDocumentCard(context, post);
+            },
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildDocumentCard(BuildContext context, MockDocument doc) {
+  Widget _buildDocumentCard(BuildContext context, Post post) {
+    final documentUrl = post.documentUrl;
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Document title and info
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -111,101 +153,50 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        doc.title,
+                        _stripHtml(post.title),
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${doc.size} • ${doc.uploadDate}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                      ),
                     ],
                   ),
                 ),
-                // Download indicator
-                if (doc.isDownloaded)
-                  Chip(
-                    label: const Text('Téléchargé'),
-                    backgroundColor: Colors.green[100],
-                    labelStyle: TextStyle(
-                      color: Colors.green[800],
-                      fontSize: 12,
-                    ),
-                  ),
               ],
             ),
             const SizedBox(height: 16),
-            // Actions
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if (doc.isDownloaded)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Ouverture de ${doc.title}...'),
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.visibility),
-                      label: const Text('Ouvrir'),
-                    ),
-                  ),
-                if (doc.isDownloaded) const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            doc.isDownloaded
-                                ? 'Suppression de ${doc.title}...'
-                                : 'Téléchargement de ${doc.title}...',
-                          ),
-                          duration: const Duration(seconds: 2),
+            if (documentUrl == null) const SizedBox.shrink(),
+            if (documentUrl != null)
+              FutureBuilder<bool>(
+                future: _repo.isDownloaded(post.id),
+                builder: (context, snapshot) {
+                  final downloaded = snapshot.data == true;
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: DownloadButton(
+                          id: post.id,
+                          title: post.title,
+                          remoteUrl: documentUrl,
+                          onDownloaded: () => setState(() {}),
                         ),
-                      );
-                    },
-                    icon: Icon(
-                      doc.isDownloaded ? Icons.delete : Icons.download,
-                    ),
-                    label: Text(doc.isDownloaded ? 'Supprimer' : 'Télécharger'),
-                  ),
-                ),
-              ],
-            ),
+                      ),
+                      if (downloaded) const SizedBox(width: 12),
+                      if (downloaded)
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _openDocument(post.id, post.title),
+                            icon: const Icon(Icons.open_in_new),
+                            label: const Text('Ouvrir'),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
           ],
         ),
       ),
     );
   }
-}
-
-// Mock document model
-class MockDocument {
-  final String id;
-  final String title;
-  final String fileName;
-  final String size;
-  final String uploadDate;
-  bool isDownloaded;
-  final String downloadUrl;
-
-  MockDocument({
-    required this.id,
-    required this.title,
-    required this.fileName,
-    required this.size,
-    required this.uploadDate,
-    required this.isDownloaded,
-    required this.downloadUrl,
-  });
 }

@@ -1,21 +1,20 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../models/downloaded_document.dart';
 import '../repositories/document_repository.dart';
 import '../services/download_service.dart';
-import '../screens/document_viewer_screen.dart';
 
 class DownloadButton extends StatefulWidget {
   final String id;
   final String title;
   final String remoteUrl;
+  final VoidCallback? onDownloaded;
 
   const DownloadButton({
     super.key,
     required this.id,
     required this.title,
     required this.remoteUrl,
+    this.onDownloaded,
   });
 
   @override
@@ -48,7 +47,7 @@ class _DownloadButtonState extends State<DownloadButton> {
     );
 
     try {
-      final updated = await _repo.downloadDocument(doc, (sent, total) {
+      await _repo.downloadDocument(doc, (sent, total) {
         if (total > 0) {
           final p = ((sent / total) * 100).round();
           setState(() {
@@ -62,17 +61,11 @@ class _DownloadButtonState extends State<DownloadButton> {
         _progress = 100;
       });
 
-      // Open viewer
-      if (updated.localPath != null) {
-        if (mounted)
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => DocumentViewerScreen(
-                localPath: updated.localPath!,
-                title: updated.title,
-              ),
-            ),
-          );
+      widget.onDownloaded?.call();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Téléchargement terminé : ${widget.title}')),
+        );
       }
     } catch (e) {
       setState(() {
@@ -85,33 +78,10 @@ class _DownloadButtonState extends State<DownloadButton> {
     }
   }
 
-  Future<void> _openOrDownload() async {
-    final exists = await _repo.isDownloaded(widget.id);
-    if (exists) {
-      final doc = await _repo.getById(widget.id);
-      if (doc != null &&
-          doc.localPath != null &&
-          File(doc.localPath!).existsSync()) {
-        if (mounted)
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => DocumentViewerScreen(
-                localPath: doc.localPath!,
-                title: doc.title,
-              ),
-            ),
-          );
-        return;
-      }
-    }
-    // otherwise download
-    await _handleDownload();
-  }
-
   @override
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
-      onPressed: _isDownloading ? null : _openOrDownload,
+      onPressed: _isDownloading ? null : _handleDownload,
       icon: _isDownloading
           ? const SizedBox(
               width: 16,
@@ -120,9 +90,7 @@ class _DownloadButtonState extends State<DownloadButton> {
             )
           : const Icon(Icons.download),
       label: Text(
-        _isDownloading
-            ? 'Téléchargement ($_progress%)'
-            : 'Télécharger / Ouvrir',
+        _isDownloading ? 'Téléchargement ($_progress%)' : 'Télécharger',
       ),
     );
   }

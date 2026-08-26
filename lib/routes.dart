@@ -4,10 +4,10 @@ import 'screens/article_screen.dart';
 import 'screens/category_screen.dart';
 import 'screens/categories_screen.dart';
 import 'screens/search_screen.dart';
-import 'screens/events_screen.dart';
+import 'screens/formations_screen.dart';
 import 'screens/documents_screen.dart';
 import 'screens/offline_test_screen.dart';
-import 'screens/projects_page.dart';
+import 'screens/projects_screen.dart';
 import 'screens/about_screen.dart';
 import 'screens/news_list_screen.dart';
 import 'screens/podcasts_list_screen.dart';
@@ -22,7 +22,7 @@ class AppRoutes {
   static const String team = '/team';
   static const String search = '/search';
   static const String projects = '/projects';
-  static const String events = '/events';
+  static const String formations = '/formations';
   static const String community = '/community';
   static const String documents = '/documents';
   static const String offlineTest = '/offline-test';
@@ -82,10 +82,10 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const SearchScreen());
 
       case projects:
-        return MaterialPageRoute(builder: (_) => const ProjectsPage());
+        return MaterialPageRoute(builder: (_) => const ProjectsScreen());
 
-      case events:
-        return MaterialPageRoute(builder: (_) => const EventsScreen());
+      case formations:
+        return MaterialPageRoute(builder: (_) => const FormationsScreen());
 
       case community:
         return MaterialPageRoute(builder: (_) => const CommunityScreen());

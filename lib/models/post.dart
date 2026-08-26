@@ -1,3 +1,5 @@
+import '../utils/html_utils.dart';
+
 /// Modèle pour un article de blog/actualité
 class Post {
   final String id;
@@ -12,6 +14,7 @@ class Post {
   final List<String>? categories; // Noms des catégories
   final String? videoUrl; // URL vidéo (YouTube, Vimeo, etc.)
   final String? videoType; // 'mp4', 'youtube', 'vimeo', 'embed', etc.
+  final String? documentUrl; // URL du document PDF/Word à télécharger
 
   Post({
     required this.id,
@@ -26,6 +29,7 @@ class Post {
     this.categories,
     this.videoUrl,
     this.videoType,
+    this.documentUrl,
   });
 
   factory Post.fromJson(Map<String, dynamic> json) {
@@ -34,8 +38,9 @@ class Post {
       if (categoriesData is List) {
         return (categoriesData)
             .map(
-              (cat) =>
-                  cat is Map ? ((cat['node'] as Map)['name'] as String?) ?? '' : cat.toString(),
+              (cat) => cat is Map
+                  ? ((cat['node'] as Map)['name'] as String?) ?? ''
+                  : cat.toString(),
             )
             .where((name) => name.isNotEmpty)
             .toList();
@@ -126,7 +131,46 @@ class Post {
       return videoUrl;
     }
 
-    String? videoUrl = extractVideoUrl(json['content']?.toString(), json['acf']);
+    final acfData = json['acf'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(json['acf'] as Map)
+        : null;
+
+    String? extractDocumentUrl(String? content, Map<String, dynamic>? acf) {
+      final urlPattern = RegExp(
+        "https?:\\/\\/[^\\s\\\"'<>]+?\\.(?:pdf|docx?|xlsx?|pptx?)",
+        caseSensitive: false,
+      );
+
+      String? matchFirstUrl(String? text) {
+        if (text == null) return null;
+        final match = urlPattern.firstMatch(text);
+        return match?.group(0);
+      }
+
+      String? searchMap(dynamic item) {
+        if (item is String) return matchFirstUrl(item);
+        if (item is Map) {
+          for (final value in item.values) {
+            final result = searchMap(value);
+            if (result != null) return result;
+          }
+        } else if (item is List) {
+          for (final value in item) {
+            final result = searchMap(value);
+            if (result != null) return result;
+          }
+        }
+        return null;
+      }
+
+      return searchMap(acf) ?? matchFirstUrl(content);
+    }
+
+    String? videoUrl = extractVideoUrl(json['content']?.toString(), acfData);
+    final documentUrl = extractDocumentUrl(
+      json['content']?.toString(),
+      acfData,
+    );
     // strip common nuisance query parameters that break players
     if (videoUrl != null && videoUrl.contains('youtube.com')) {
       // remove ?feature=oembed or any other query params after the id/embed
@@ -151,10 +195,10 @@ class Post {
 
     return Post(
       id: json['id'] ?? '',
-      title: json['title'] ?? '',
+      title: HtmlUtils.decodeEntities(json['title'] ?? ''),
       slug: json['slug'] ?? '',
       content: json['content'] ?? '',
-      excerpt: json['excerpt'],
+      excerpt: HtmlUtils.stripHtmlAndDecodeEntities(json['excerpt']),
       date: json['date'] ?? '',
       imageUrl: json['featuredImage']?['node']?['sourceUrl'],
       imageAlt: json['featuredImage']?['node']?['altText'],
@@ -162,6 +206,7 @@ class Post {
       categories: categories,
       videoUrl: videoUrl,
       videoType: videoType,
+      documentUrl: documentUrl,
     );
   }
 
@@ -179,6 +224,7 @@ class Post {
       'categories': categories,
       'videoUrl': videoUrl,
       'videoType': videoType,
+      'documentUrl': documentUrl,
     };
   }
 }

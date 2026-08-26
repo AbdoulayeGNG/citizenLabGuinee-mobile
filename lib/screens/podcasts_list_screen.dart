@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'dart:math';
 import 'package:provider/provider.dart';
 import 'package:html/parser.dart' as html_parser;
 import '../models/post.dart';
 import '../services/api_service.dart';
+import '../utils/responsive.dart';
 
 class PodcastBanner extends StatelessWidget {
   const PodcastBanner({super.key});
@@ -12,7 +14,7 @@ class PodcastBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final bannerHeight = screenHeight * 0.32;
+    final bannerHeight = max(screenHeight * 0.32, 280.0);
 
     return SizedBox(
       height: bannerHeight,
@@ -102,7 +104,7 @@ class PodcastCard extends StatelessWidget {
     final dateFormat = DateFormat('dd MMM yyyy', 'fr_FR');
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      margin: EdgeInsets.zero, // Marges gérées par le GridView parent
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
@@ -139,53 +141,65 @@ class PodcastCard extends StatelessWidget {
                 ),
               )
             else
-              Container(
-                height: 180,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFCD116),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.podcasts,
-                    size: 60,
-                    color: Color(0xFFCE1126),
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFCD116),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.podcasts,
+                      size: 60,
+                      color: Color(0xFFCE1126),
+                    ),
                   ),
                 ),
               ),
             // Content section
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Hero(
-                    tag: 'podcast-title-${post.id}',
-                    child: Text(
-                      post.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Hero(
+                      tag: 'podcast-title-${post.id}',
+                      child: Text(
+                        post.title,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: Responsive.getScaledFontSize(
+                                context,
+                                18,
+                              ),
+                            ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    dateFormat.format(DateTime.parse(post.date)),
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _stripHtmlTags(post.excerpt),
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      dateFormat.format(DateTime.parse(post.date)),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: Text(
+                        _stripHtmlTags(post.excerpt),
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -245,8 +259,19 @@ class _PodcastsListScreenState extends State<PodcastsListScreen>
           slivers: [
             SliverToBoxAdapter(child: const PodcastBanner()),
             SliverPadding(
-              padding: const EdgeInsets.only(top: 16.0),
-              sliver: SliverList(
+              padding: const EdgeInsets.all(16.0),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: Responsive.getGridColumns(
+                    context,
+                    mobile: 1,
+                    tablet: 2,
+                    largeTablet: 3,
+                  ),
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  mainAxisExtent: Responsive.isMobile(context) ? 400 : 420,
+                ),
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final post = posts[index];
                   return PodcastCard(post: post);

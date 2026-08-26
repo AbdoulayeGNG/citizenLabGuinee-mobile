@@ -4,6 +4,8 @@ import '../services/api_service.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/post_card.dart';
 import '../models/project.dart';
+import '../utils/responsive.dart';
+import '../theme_provider.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -11,14 +13,24 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final apiService = Provider.of<ApiService>(context);
+    final themeProvider = context.watch<ThemeProvider>();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CitizenLab Guinée'),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text('CitizenLab Guinée'),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () => Navigator.pushNamed(context, '/search'),
+          ),
+          IconButton(
+            icon: Icon(
+              themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+            ),
+            onPressed: () => context.read<ThemeProvider>().toggleTheme(),
           ),
           IconButton(
             icon: apiService.isLoading
@@ -57,7 +69,7 @@ class HomeScreen extends StatelessWidget {
                   const _QuickAccessSection(),
 
                   // 4️⃣ Projets en aperçu (max 3)
-                  _ProjectsPreviewSection(),
+                  const _ProjectsPreviewSection(),
 
                   // 5️⃣ Actualités (max 3)
                   _NewsPreviewSection(apiService: apiService),
@@ -105,12 +117,16 @@ class _HeroSection extends StatelessWidget {
           Icon(Icons.public, size: 36, color: Colors.white.withOpacity(0.9)),
           const SizedBox(height: 12),
           // Titre principal
-          Text(
-            'CitizenLab Guinée',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'CitizenLab Guinée',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -160,7 +176,6 @@ class _AboutSection extends StatelessWidget {
             'décisions qui les concernent.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontSize: 14,
-              color: Colors.grey[700],
               height: 1.6,
             ),
           ),
@@ -204,14 +219,19 @@ class _QuickAccessSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Grid 2x2
+          // Grid adaptatif (2 colonnes mobile, 4 tablette)
           GridView.count(
-            crossAxisCount: 2,
+            crossAxisCount: Responsive.getGridColumns(
+              context,
+              mobile: 2,
+              tablet: 4,
+              largeTablet: 4,
+            ),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.5,
+            childAspectRatio: Responsive.isMobile(context) ? 1.5 : 2.0,
             children: [
               _QuickAccessCard(
                 icon: Icons.work_outline,
@@ -220,8 +240,8 @@ class _QuickAccessSection extends StatelessWidget {
               ),
               _QuickAccessCard(
                 icon: Icons.event,
-                title: 'Événements',
-                onTap: () => Navigator.pushNamed(context, '/events'),
+                title: 'Formations',
+                onTap: () => Navigator.pushNamed(context, '/formations'),
               ),
               _QuickAccessCard(
                 icon: Icons.group_outlined,
@@ -245,9 +265,11 @@ class _QuickAccessSection extends StatelessWidget {
 // 4️⃣ PROJECTS PREVIEW SECTION - Max 3 projets
 // ============================================================================
 class _ProjectsPreviewSection extends StatelessWidget {
+  const _ProjectsPreviewSection();
+
   @override
   Widget build(BuildContext context) {
-    final projects = Project.dummyProjects.take(3).toList();
+    final projects = ProjectCategory.projects.take(3).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -326,29 +348,38 @@ class _NewsPreviewSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Scroll horizontal
-          SizedBox(
-            height: 160,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: newsList.length,
-              itemBuilder: (context, index) {
-                final post = newsList[index];
-                return Padding(
-                  padding: EdgeInsets.only(
-                    right: index == newsList.length - 1 ? 0 : 12,
-                  ),
-                  child: PostCard(
-                    post: post,
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      '/article',
-                      arguments: {'id': post.slug},
-                    ),
-                  ),
-                );
-              },
-            ),
+          // Scroll horizontal avec LayoutBuilder
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cardWidth = Responsive.isMobile(context)
+                  ? Responsive.width(context) * 0.6
+                  : Responsive.width(context) * 0.3;
+              final totalHeight =
+                  (cardWidth * 0.45) + 80; // imageHeight + texte padding
+              return SizedBox(
+                height: totalHeight,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: newsList.length,
+                  itemBuilder: (context, index) {
+                    final post = newsList[index];
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        right: index == newsList.length - 1 ? 0 : 12,
+                      ),
+                      child: PostCard(
+                        post: post,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          '/article',
+                          arguments: {'id': post.slug},
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -401,29 +432,37 @@ class _PodcastPreviewSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Scroll horizontal
-          SizedBox(
-            height: 160,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: podcastList.length,
-              itemBuilder: (context, index) {
-                final post = podcastList[index];
-                return Padding(
-                  padding: EdgeInsets.only(
-                    right: index == podcastList.length - 1 ? 0 : 12,
-                  ),
-                  child: PostCard(
-                    post: post,
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      '/article',
-                      arguments: {'id': post.slug},
-                    ),
-                  ),
-                );
-              },
-            ),
+          // Scroll horizontal adaptatif
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cardWidth = Responsive.isMobile(context)
+                  ? Responsive.width(context) * 0.6
+                  : Responsive.width(context) * 0.3;
+              final totalHeight = (cardWidth * 0.45) + 80;
+              return SizedBox(
+                height: totalHeight,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: podcastList.length,
+                  itemBuilder: (context, index) {
+                    final post = podcastList[index];
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        right: index == podcastList.length - 1 ? 0 : 12,
+                      ),
+                      child: PostCard(
+                        post: post,
+                        onTap: () => Navigator.pushNamed(
+                          context,
+                          '/article',
+                          arguments: {'id': post.slug},
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -465,10 +504,9 @@ class _QuickAccessCard extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -483,101 +521,80 @@ class _QuickAccessCard extends StatelessWidget {
 
 /// Carte projet compacte (pour aperçu)
 class _CompactProjectCard extends StatelessWidget {
-  final Project project;
+  final ProjectCategory project;
 
   const _CompactProjectCard({required this.project});
 
+  Color _getColorFromHex(String hexColor) {
+    hexColor = hexColor.replaceFirst('#', '');
+    return Color(int.parse('FF$hexColor', radix: 16));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colorAccent = _getColorFromHex(project.color);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 1,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            // Image compacte avec fallback
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => Navigator.pushNamed(context, '/projects'),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              // Icone compacte avec fallback
+              Container(
                 width: 60,
                 height: 60,
-                child: (project.imageUrl.isNotEmpty)
-                    ? Image.network(
-                        project.imageUrl,
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 60,
-                            height: 60,
-                            color: Colors.grey.shade300,
-                            child: const Icon(
-                              Icons.broken_image,
-                              color: Colors.grey,
-                              size: 28,
-                            ),
-                          );
-                        },
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            width: 60,
-                            height: 60,
-                            color: Colors.grey.shade200,
-                            child: const Center(
-                              child: SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      )
-                    : Container(
-                        width: 60,
-                        height: 60,
-                        color: Colors.grey.shade300,
-                        child: const Icon(
-                          Icons.image_not_supported,
-                          color: Colors.white70,
-                          size: 28,
-                        ),
+                decoration: BoxDecoration(
+                  color: colorAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorAccent.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    project.icon,
+                    style: const TextStyle(fontSize: 28),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Texte
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      project.title,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
                       ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Texte
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    project.title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    project.category,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      project.themes.isNotEmpty ? project.themes.first : '',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            // Chevron
-            Icon(Icons.chevron_right, size: 20, color: Colors.grey[400]),
-          ],
+              // Chevron
+              Icon(Icons.chevron_right, size: 20, color: Colors.grey[400]),
+            ],
+          ),
         ),
       ),
     );

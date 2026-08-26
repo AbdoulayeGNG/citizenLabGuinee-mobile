@@ -1,48 +1,76 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/api_service.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final apiService = Provider.of<ApiService>(context);
+    final videoCategories = apiService.categories.where((category) {
+      final displayName = category.displayName.toLowerCase();
+      final slug = category.slug.toLowerCase();
+      return displayName.contains('video') ||
+          displayName.contains('vidéo') ||
+          slug.contains('video') ||
+          slug.contains('vidéo');
+    }).toList();
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: Color(0xFF009460)),
-            child: Text(
+          Container(
+            color: const Color(0xFF009460),
+            width: double.infinity,
+            padding: EdgeInsets.only(
+              top:
+                  MediaQuery.of(context).padding.top +
+                  24, // Prend en compte la statusBar
+              bottom: 24,
+              left: 16,
+              right: 16,
+            ),
+            child: const Text(
               'CitizenLab Guinée',
-              style: TextStyle(color: Colors.white, fontSize: 24),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           _buildSection('Navigation', [
             _buildMenuItem(context, 'Accueil', Icons.home, '/'),
             _buildMenuItem(context, 'Actualités', Icons.newspaper, '/news'),
-            /*_buildMenuItem(
-              context,
-              'Catégories',
-              Icons.category,
-              '/categories',
-            ),*/
-            _buildMenuItem(context, 'Équipe', Icons.people, '/community'),
-            //_buildMenuItem(context, 'Recherche', Icons.search, '/search'),
-          ]),
-          const Divider(),
-          _buildSection('À propos', [
-            _buildMenuItem(context, 'Qui sommes-nous', Icons.info, '/about'),
-          ]),
-          /*const Divider(),
-          _buildSection('Debug', [
+            _buildMenuItem(context, 'Podcasts', Icons.podcasts, '/podcasts'),
+            _buildMenuItem(context, 'Projets', Icons.work_outline, '/projects'),
             _buildMenuItem(
               context,
-              'Test Mode Offline',
-              Icons.wifi_off,
-              '/offline-test',
+              'Formations',
+              Icons.school_outlined,
+              '/formations',
             ),
-          ]),*/
-         // const Divider(),
-         // _buildMenuItem(context, 'Réglages', Icons.settings, null),
+            _buildMenuItem(
+              context,
+              'Documents',
+              Icons.description_outlined,
+              '/documents',
+            ),
+            _buildMenuItem(context, 'Équipe', Icons.people, '/community'),
+          ]),
+          if (videoCategories.isNotEmpty) ...[
+            ...videoCategories.map((category) {
+              return _buildCategoryMenuItem(
+                context,
+                category.displayName,
+                category.slug,
+                icon: Icons.video_library_rounded,
+              );
+            }).toList(),
+          ],
+          _buildMenuItem(context, 'Qui sommes-nous', Icons.info, '/about'),
         ],
       ),
     );
@@ -53,7 +81,7 @@ class AppDrawer extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
           child: Text(
             title,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
@@ -71,6 +99,10 @@ class AppDrawer extends StatelessWidget {
     String? route,
   ) {
     return ListTile(
+      dense: true,
+      visualDensity: VisualDensity.compact,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      minVerticalPadding: 0,
       leading: Icon(icon),
       title: Text(label),
       onTap: () {
@@ -80,6 +112,30 @@ class AppDrawer extends StatelessWidget {
         } else if (route == '/') {
           Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
         }
+      },
+    );
+  }
+
+  static ListTile _buildCategoryMenuItem(
+    BuildContext context,
+    String label,
+    String slug, {
+    IconData icon = Icons.category,
+  }) {
+    return ListTile(
+      dense: true,
+      visualDensity: VisualDensity.compact,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      minVerticalPadding: 0,
+      leading: Icon(icon),
+      title: Text(label),
+      onTap: () {
+        Navigator.pop(context);
+        Navigator.pushNamed(
+          context,
+          '/category',
+          arguments: {'slug': slug, 'name': label},
+        );
       },
     );
   }

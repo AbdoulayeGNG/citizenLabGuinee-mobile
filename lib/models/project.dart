@@ -1,3 +1,98 @@
+/// Modèle pour une catégorie de projet réalisée par CitizenLab Guinée
+class ProjectCategory {
+  final String id;
+  final String title;
+  final String description;
+  final String icon;
+  final List<String> themes;
+  final String color;
+
+  const ProjectCategory({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.themes,
+    required this.color,
+  });
+
+  /// Données statiques des projets réalisés
+  static List<ProjectCategory> get projects => [
+    ProjectCategory(
+      id: '1',
+      title: 'Développement d\'applications',
+      description:
+          'Création de solutions numériques innovantes pour organisations et communautés',
+      icon: '📱',
+      themes: [
+        'Applications Web',
+        'Applications Mobiles',
+        'Solutions Numériques',
+        'UX/UI Design',
+      ],
+      color: '#CE1126', // Rouge
+    ),
+    ProjectCategory(
+      id: '2',
+      title: 'Formations numériques',
+      description:
+          'Renforcement des capacités à travers des formations spécialisées en technologies',
+      icon: '📚',
+      themes: [
+        'Cybersécurité',
+        'Intelligence Artificielle',
+        'CivicTech',
+        'Démocratie numérique',
+        'Développement Web/Mobile',
+      ],
+      color: '#FCD116', // Jaune
+    ),
+    ProjectCategory(
+      id: '3',
+      title: 'Création de contenus citoyens',
+      description:
+          'Production de contenu éducatif pour sensibiliser sur les enjeux démocratiques',
+      icon: '✍️',
+      themes: [
+        'Sensibilisation démocratique',
+        'Droits civiques',
+        'Participation citoyenne',
+        'Éducation civique',
+      ],
+      color: '#009460', // Vert
+    ),
+    ProjectCategory(
+      id: '4',
+      title: 'Assistance et accompagnement',
+      description:
+          'Soutien personnalisé pour les jeunes, communautés et organisations',
+      icon: '🤝',
+      themes: [
+        'Accompagnement jeunesse',
+        'Conseil technologique',
+        'Support communautaire',
+        'Mentorat numérique',
+      ],
+      color: '#CE1126', // Rouge
+    ),
+    ProjectCategory(
+      id: '5',
+      title: 'Analyse de données',
+      description:
+          'Exploitation et analyse des données publiques pour comprendre les réalités guinéennes',
+      icon: '📊',
+      themes: [
+        'Données publiques',
+        'Rapports analytiques',
+        'Études sociales',
+        'Insights numériques',
+      ],
+      color: '#FCD116', // Jaune
+    ),
+  ];
+}
+
+/// Ancien modèle Project conservé pour la rétrocompatibilité
 class Project {
   final int id;
   final String title;

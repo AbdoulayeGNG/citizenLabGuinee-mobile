@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -17,7 +16,6 @@ class _AboutScreenState extends State<AboutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
       appBar: _buildAppBar(context),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -57,7 +55,6 @@ class _AboutScreenState extends State<AboutScreen> {
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       elevation: 2,
-      backgroundColor: AppTheme.lightTheme.primaryColor,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
         onPressed: () => Navigator.pop(context),
@@ -163,8 +160,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                  fontSize: 28,
+                                    fontSize: 28,
                 ),
               ),
               const SizedBox(height: 16),
@@ -174,8 +170,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 'Un laboratoire d\'innovation et d\'engagement civique dédié à transformer la Guinée par le numérique, en renforçant la participation citoyenne et en promouvant une gouvernance ouverte et inclusive.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[700],
-                  height: 1.7,
+                                    height: 1.7,
                   fontSize: 15,
                 ),
               ),
@@ -195,8 +190,7 @@ class _AboutScreenState extends State<AboutScreen> {
           'Notre Mission',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
-            fontSize: 26,
+                        fontSize: 26,
           ),
         ),
         const SizedBox(height: 20),
@@ -211,7 +205,7 @@ class _AboutScreenState extends State<AboutScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               gradient: LinearGradient(
-                colors: [guineeYellow.withOpacity(0.12), Colors.white],
+                colors: [guineeYellow.withOpacity(0.12), Theme.of(context).colorScheme.surface],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -259,8 +253,7 @@ class _AboutScreenState extends State<AboutScreen> {
                     'Transformer par le numérique',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      fontSize: 20,
+                                            fontSize: 20,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -317,8 +310,7 @@ class _AboutScreenState extends State<AboutScreen> {
           child: Text(
             text,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey[700],
-              height: 1.5,
+                            height: 1.5,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -357,8 +349,7 @@ class _AboutScreenState extends State<AboutScreen> {
           'Nos Axes d\'Intervention',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
+                      ),
         ),
         const SizedBox(height: 20),
 
@@ -389,7 +380,7 @@ class _AboutScreenState extends State<AboutScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           gradient: LinearGradient(
-            colors: [dominantColor.withOpacity(0.08), Colors.white],
+            colors: [dominantColor.withOpacity(0.08), Theme.of(context).colorScheme.surface],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -430,8 +421,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 axis['title'],
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+                                  ),
               ),
               const SizedBox(height: 8),
 
@@ -440,7 +430,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 axis['subtitle'],
                 style: Theme.of(
                   context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                ).textTheme.bodyMedium,
               ),
             ],
           ),
@@ -484,8 +474,7 @@ class _AboutScreenState extends State<AboutScreen> {
           'Nos Valeurs',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
+                      ),
         ),
         const SizedBox(height: 20),
 
@@ -552,15 +541,13 @@ class _AboutScreenState extends State<AboutScreen> {
                     value['title']!,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                                          ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     value['description']!,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Colors.grey[600],
-                      height: 1.4,
+                                            height: 1.4,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -657,17 +644,12 @@ class _AboutScreenState extends State<AboutScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Email: info@citizenlabguinee.org',
+              'Email: citizenlabguinee@africtivistes.org',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Téléphone: +224 XXX XXX XXX',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Adresse: Conakry, Guinée',
+              'Adresse: Labé, Guinée',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],

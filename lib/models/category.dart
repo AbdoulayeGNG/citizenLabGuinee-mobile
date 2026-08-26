@@ -27,4 +27,13 @@ class Category {
   Map<String, dynamic> toJson() {
     return {'id': id, 'name': name, 'slug': slug, 'description': description};
   }
+
+  String get displayName {
+    final RegExp exp = RegExp(
+      r'<[^>]*>',
+      multiLine: true,
+      caseSensitive: false,
+    );
+    return name.replaceAll(exp, '').trim();
+  }
 }

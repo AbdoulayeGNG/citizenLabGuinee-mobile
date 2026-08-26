@@ -225,7 +225,7 @@ class GraphQLService {
     final result = await executeQuery(
       getPostsByCategoryQuery(categorySlug, first: first, after: after),
       variables: {
-        'slug': categorySlug,
+        'slug': [categorySlug], // Passer comme tableau
         'first': first,
         if (after != null) 'after': after,
       },

@@ -173,7 +173,6 @@ String getNodeByURI(String uri) {
           id
           title
           content
-          excerpt
           date
           slug
           featuredImage {
@@ -335,7 +334,7 @@ String getPostsByCategoryQuery(
   String? after,
 }) {
   return '''
-    query GetPostsByCategory(\$slug: String!, \$first: Int!, \$after: String) {
+    query GetPostsByCategory(\$slug: [String]!, \$first: Int!, \$after: String) {
       categories(where: { slug: \$slug }, first: 1) {
         edges {
           node {
@@ -355,6 +354,12 @@ String getPostsByCategoryQuery(
                   slug
                   excerpt
                   date
+                  content
+                  acf {
+                    video_url
+                    video
+                    videoUrl
+                  }
                   featuredImage {
                     node {
                       sourceUrl
